@@ -1,0 +1,47 @@
+[Format spec: DOCX, informal running notes kept by shift technicians in a shared notebook file, inconsistent style/spelling, multiple contributors]
+
+Press 7 / P07 notes -- shared file
+
+-- 14 Mar 2017 (DM) --
+PX400 running fine, noise from cooling fan on control panel a bit loud
+today, will keep an eye, not urgent.
+
+-- 2 Jun 2017 (DM) --
+Op reported minor smell during cure cycle, checked press 7, nothing
+visible, probably a bit of residue burn-off, normal. No temp alarm.
+
+-- 19 Aug 2017 (DM) --
+Annual cal done, RTD2 flagged marginal again (see cal sheet), will
+watch it, prob need to replace next year if trend continues.
+
+-- 3 Jan 2018 (SN) --
+P-07 changeover to new mold family went smooth, no fixture issues.
+
+-- 22 Apr 2018 (DM) --
+Small oil leak on hydraulic side, fixed, unrelated to heater/temp
+system.
+
+-- 10 Sep 2018 (DM) --
+Replaced RTD2 (see WO-18-0322), new sensor calibrated fine. Old one
+was drifting, this happens on zone 2 position every few years, nothing
+unusual.
+
+-- 5 Feb 2019 (SN) --
+PX-400 quiet week, nothing to report.
+
+-- 30 Jul 2019 (DM) --
+Op asked why temp limit is 42.3 and not just 42 or 43, told him I
+think it's from way back when the old machine was here (PX200 days),
+don't remember details, told him to ask process engg if he wants the
+full story.
+
+-- 12 Dec 2019 (SN) --
+Press7 fine. Reminder to self: annual cal due Feb 2020.
+
+-- 18 Mar 2020 (DM) --
+Cal delayed due to plant staffing restrictions this month, will do as
+soon as cleared, per plant memo.
+
+-- 6 Aug 2020 (SN) --
+Press-07 all good. Fixture (FX7714B) still holding up well since 2014
+change.

@@ -1,0 +1,62 @@
+[Format spec: 5-page PDF, formal Process Qualification Protocol + Report, structured IQ/OQ/PQ-style sections typical of a regulated-adjacent manufacturing quality system]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+PROCESS QUALIFICATION REPORT
+
+Report No: QUAL-2011-021                              Date: 14-SEP-2011
+Prepared by: T. Balakrishnan, Equipment Engineer
+Approved by: P. Sundaram (Quality Manager), K. Doraiswamy (Plant Engg Mgr)
+Related: ECO-2011-184, Commissioning Report COMM-2011-057
+
+1. OBJECTIVE
+To formally qualify the newly installed PX-400 unit (Press-07, Asset 7714)
+for production use, replacing PX-200, per Corporate Quality Policy QP-002
+(Equipment Qualification Requirements).
+
+2. QUALIFICATION APPROACH
+Per QP-002 Section 5.2, an equipment-swap qualification (as opposed to a
+new-process qualification) requires demonstrating that the replacement
+equipment performs equivalently to the predecessor across the EXISTING
+validated process envelope. It does not require re-establishing the
+process envelope itself, provided the existing envelope (SOP-CURE-07 v5,
+UCL 42.3 deg C) remains the target operating range.
+
+3. INSTALLATION QUALIFICATION (IQ)
+Confirmed per Commissioning Report COMM-2011-057: mechanical, electrical,
+and sensor calibration checks all PASS.
+
+4. OPERATIONAL QUALIFICATION (OQ)
+Ran controlled trials at target setpoints of 36, 38, 40, and 42.3 deg C
+(i.e., LCL, mid-range, and UCL of the existing envelope). All setpoints
+demonstrated stable control with the new HPS-CTRL v3.2 controller and
+RTD sensors, showing tighter control band than the PX-200/thermocouple
+combination (max observed deviation +/-0.15 C vs. historical +/-0.4 C
+on PX-200 near UCL).
+
+5. PERFORMANCE QUALIFICATION (PQ)
+Ran 3 consecutive production lots (n=1,240 parts total) at standard
+process settings within the existing envelope. All lots met quality
+acceptance criteria (blister rate 0%, dimensional conformance 100%).
+
+6. SCOPE NOTE
+This qualification confirms PX-400 performs at least as well as PX-200
+within the EXISTING 36.0-42.3 deg C operating envelope. It does not
+address, and was not intended to address, whether the new equipment's
+wider rated capability (see Commissioning Report, Section 2) would
+support operation above 42.3 deg C. That would be a separate exercise
+outside the scope of an equipment-swap qualification per QP-002.
+
+7. CONCLUSION
+PX-400 is qualified for production use at Press-07 within the existing
+process envelope defined in SOP-CURE-07 v5. Recommend release to
+production.
+
+8. APPROVAL
+
+  Role                     Name                Date
+  ----------------------   -----------------   -----------
+  Equipment Engineer        T. Balakrishnan     14-Sep-2011
+  Quality Manager            P. Sundaram         16-Sep-2011
+  Plant Engineering Mgr      K. Doraiswamy       16-Sep-2011
+
+--- End of Report QUAL-2011-021 ---

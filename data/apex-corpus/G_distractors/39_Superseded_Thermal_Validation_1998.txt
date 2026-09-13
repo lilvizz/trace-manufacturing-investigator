@@ -1,0 +1,41 @@
+[Format spec: 4-page PDF, vendor technical report, different formatting/letterhead style (external document), pre-dates plant installation]
+
+HALBERD PROCESS SYSTEMS LTD.
+TECHNICAL VALIDATION REPORT (Pre-Delivery)
+
+Report No: HPS-VAL-1998-0341                          Date: 22-JUN-1998
+Equipment: PX-200, Unit Serial HPS-PX200-0341 (destined for Apex
+           Thermal Components, Chennai, India -- per Purchase Order
+           APX-PO-1998-077)
+Prepared by: Halberd Process Systems Engineering Team (UK)
+
+1. PURPOSE
+Standard factory acceptance thermal characterization, performed at
+Halberd's UK facility prior to shipment, using Halberd's generic test
+material (not customer's production polymer compound).
+
+2. TEST CONDITIONS
+Trials run at 30, 40, 50, and 60 deg C using Halberd standard test
+coupon material, 2-hour duration each (standard factory acceptance
+duration, shorter than typical customer production runs).
+
+3. RESULTS
+  All test points showed stable control within Halberd's standard
+  acceptance criteria (+/-1.0 C) for the 2-hour test duration. No
+  instability observed at any test point, including 60 deg C.
+
+4. NOTE
+This factory acceptance test uses generic test material and a shorter
+duration than typical customer production cycles, and is intended to
+verify baseline equipment function prior to shipment, not to establish
+a customer-specific production operating limit. Customer should conduct
+their own process validation using their specific material and
+representative production run durations before finalizing production
+operating parameters. See equipment manual Section 4 for rated
+operating range (15-65 C).
+
+5. CONCLUSION
+Unit HPS-PX200-0341 passes factory acceptance testing and is approved
+for shipment.
+
+--- End of Report HPS-VAL-1998-0341 ---

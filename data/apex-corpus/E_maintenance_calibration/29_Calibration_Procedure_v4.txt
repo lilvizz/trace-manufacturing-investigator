@@ -1,0 +1,49 @@
+[Format spec: 3-page PDF, generic plant-wide metrology procedure]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+METROLOGY PROCEDURE
+
+Document No: MET-PROC-004                    Revision: v4
+Title: Calibration of Process Temperature Sensors (RTD/Thermocouple)
+Effective Date: 01-MAY-2020
+Owner: Metrology Department                   Page 1 of 3
+
+1. PURPOSE
+This procedure defines the standard method for calibration of RTD and
+thermocouple sensors used in process temperature monitoring across all
+Plant 2 production lines.
+
+2. SCOPE
+Applies to all process temperature sensors plant-wide, including but
+not limited to Line 3, Line 5, and Line 7 thermal equipment.
+
+3. CALIBRATION INTERVAL
+Standard interval: 12 months, unless equipment-specific procedure
+specifies otherwise. Sensors in high-duty-cycle service (>16 hr/day
+average) may be placed on 6-month interval at Process Engineering's
+discretion.
+
+4. ACCEPTANCE CRITERIA
+  As-found deviation: <= 0.30 deg C from reference standard (PASS)
+  As-found deviation: > 0.30 deg C (FAIL -- sensor to be adjusted or
+    replaced)
+  As-left deviation (post-adjustment): <= 0.05 deg C
+
+5. PROCEDURE
+  5.1 Remove sensor or use in-situ comparison method per equipment type.
+  5.2 Compare against certified reference standard (traceable to
+      national standards, cert renewed annually).
+  5.3 Record as-found reading.
+  5.4 Adjust/replace if outside tolerance.
+  5.5 Record as-left reading.
+  5.6 Update calibration record and set next-due date.
+
+6. RECORDS
+Calibration records to be retained for minimum 7 years per Corporate
+Quality Policy QP-009 (Record Retention).
+
+7. APPROVAL
+  Metrology Dept Lead: R. Vishwanathan            01-May-2020
+  Quality: A. Krishnan                              04-May-2020
+
+--- End of MET-PROC-004 v4 ---

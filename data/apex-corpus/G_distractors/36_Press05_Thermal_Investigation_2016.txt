@@ -1,0 +1,35 @@
+[Format spec: 3-page PDF, investigation report template]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+THERMAL INVESTIGATION REPORT
+
+Report No: INV-2016-008                                Date: 14-APR-2016
+Prepared by: S. Venkataraman, Process Engineer
+Scope: Press-05 (Equipment: PX-300, Asset 6602)
+
+1. BACKGROUND
+Two temperature excursion events recorded on Press-05 during Q1 2016,
+peak temperatures of 44.1 C and 44.6 C observed against a UCL of 44.0 C
+for that line (different product family, different equipment -- see
+SPC config, Press-05 row).
+
+2. ROOT CAUSE
+Investigation traced the excursions to a degraded thermocouple on the
+PX-300 unit (Press-05), unrelated to control-loop instability. Sensor
+replaced.
+
+3. NOTE ON LINE
+Press-05 is Asset 6602 and uses PX-300 equipment. It runs a different
+product family (fiber-reinforced components, Product line FR-200) with
+its own independently validated temperature envelope (UCL 44.0 C,
+established 2009, see Press-05 validation file -- not part of this
+corpus).
+
+4. RESOLUTION
+Sensor replaced, no further excursions since. No process parameter
+changes required.
+
+5. DISTRIBUTION
+Process Engineering file (Press-05), Quality file (Press-05)
+
+--- End of Report INV-2016-008 ---

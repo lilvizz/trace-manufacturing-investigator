@@ -1,0 +1,58 @@
+[Format spec: 2-page DOCX, informal meeting-minutes template, typed same-day by recorder, occasional shorthand]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+MEETING MINUTES
+
+Ref: QM-2001-06                                        Date: 14-JUN-2001
+Meeting: Quality / Process Engg cross-functional review
+Location: Plant 2 Quality office
+Attendees: P. Sundaram (Quality Mgr, chair), Dr. N. Ramachandran (Process
+           Engg), K. Doraiswamy (Plant Engg Mgr), M. Elango (Production
+           Supv) [S. Ganesan (Maint) attended for item 1 only]
+Recorded by: K. Meenakshi
+
+AGENDA ITEM 1: Press 7 high-temp alarm events (Apr & Jun)
+
+Discussion:
+- S. Ganesan summarized WO-01-0142 and WO-01-0198 -- no mechanical fault
+  found, both occurred during long continuous runs.
+- Dr. Ramachandran presented preliminary findings from ongoing thermal
+  characterization study (informal, full study report to follow) --
+  process shows instability developing above roughly 42 C during
+  multi-hour runs, appears linked to zone-2 heater response lag.
+- General agreement that the interim 45 C limit (set at 1999 install,
+  see Installation Record) does not provide enough margin, esp. for full
+  shift-length runs.
+- K. Doraiswamy: agrees a more conservative production limit is needed.
+  Asked whether we can just drop straight to 40 C to be safe.
+- Dr. Ramachandran: felt 40 C may be overly conservative and could affect
+  cycle time / throughput unnecessarily; preferred to set the boundary
+  with a defined margin below the onset of instability rather than an
+  arbitrary round number, once study data is finalized.
+- M. Elango: raised that Production needs a firm number soon, currently
+  running to a verbal 4-hr continuous-run cap per interim instruction,
+  which is affecting scheduling.
+
+DECISION:
+- Agreed IN PRINCIPLE to establish a conservative upper production
+  boundary below the observed instability region, to be finalized by
+  Process Engg once the characterization study and investigation report
+  are complete.
+- Dr. Ramachandran to issue a short engineering note confirming the final
+  number and margin basis, target: early Sept 2001 (allowing time to
+  finish the multi-week extended trials at the higher setpoints).
+- Interim 4-hr continuous run cap (per M. Elango's verbal instruction,
+  25-Apr-01) to remain in force until the formal note is issued.
+
+AGENDA ITEM 2: [unrelated -- incoming raw material batch quality, see
+separate minutes]
+
+Action items:
+  1. Dr. Ramachandran - issue engineering note w/ final boundary - due
+     early Sept 2001
+  2. K. Doraiswamy - update SPC configuration and SOP once note issued
+  3. M. Elango - maintain interim 4-hr cap until further notice
+
+Next review: as needed, pending engineering note.
+
+--- End of Minutes QM-2001-06 ---

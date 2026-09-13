@@ -1,0 +1,30 @@
+WorkOrder,Date,Equipment_Ref,Description,Technician,Hours,Notes
+WO-12-0055,2012-02-10,PX-400,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-12-0301,2012-08-18,Press-07,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-13-0060,2013-02-14,PX400,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-13-0299,2013-08-20,Press 7,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-13-0410,2013-11-05,PX-400,Part-locating fixture wear noted (FX-7714-A),D.Moorthy,1.5,Logged to Quality nonconformance trend; see ECO-2014-117
+WO-14-0070,2014-02-16,Press-07,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-14-0102,2014-03-03,PX-400,Fixture replacement FX-7714-A to FX-7714-B,D.Moorthy,3.0,Per ECO-2014-117
+WO-14-0305,2014-08-22,PX400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-15-0075,2015-02-19,Press-07,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-15-0310,2015-08-25,PX-400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-16-0080,2016-02-22,PX400,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-16-0315,2016-08-28,Press 7,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-17-0085,2017-02-24,PX-400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-17-0320,2017-08-30,Press-07,Routine 90-day inspection,S.Nataraj,2.0,"RTD-7714-2 flagged marginal at annual cal, see cal history"
+WO-18-0090,2018-02-26,PX400,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-18-0322,2018-09-12,Press-07,Temperature sensor replacement RTD-7714-2,D.Moorthy,2.5,"See Temperature_Sensor_Replacement_2018 report. Sensor failed cal, replaced with new unit."
+WO-19-0095,2019-02-28,PX-400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-19-0330,2019-08-30,PX400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-20-0100,2020-03-02,Press-07,Routine 90-day inspection (delayed 3 wks, staffing),D.Moorthy,2.0,No issues found
+WO-21-0105,2021-03-05,PX-400,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-21-0340,2021-09-02,Press 7,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-22-0110,2022-03-08,PX400,Controller firmware update v3.2 -> v3.2.1 (vendor patch),vendor tech (Halberd),3.0,Bug-fix patch only, no functional change to control parameters
+WO-22-0350,2022-09-10,Press-07,Routine 90-day inspection,S.Nataraj,2.0,"Referenced in Equipment Reliability Review 2022"
+WO-23-0115,2023-03-12,PX-400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-23-0360,2023-09-14,PX400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-24-0120,2024-03-15,Press-07,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-24-0365,2024-09-16,Press 7,Routine 90-day inspection,D.Moorthy,2.0,No issues found
+WO-25-0125,2025-03-18,PX-400,Routine 90-day inspection,S.Nataraj,2.0,No issues found
+WO-25-0370,2025-09-08,Press-07,Routine 90-day inspection + annual sensor cal (combined),S.Nataraj,3.5,See Temperature_Sensor_Calibration_History

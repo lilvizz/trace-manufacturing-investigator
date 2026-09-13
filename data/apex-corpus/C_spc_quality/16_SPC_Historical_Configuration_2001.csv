@@ -1,0 +1,7 @@
+ChangeDate,Asset,Equipment_Ref,Parameter,Old_UCL,New_UCL,Change_Reason_Text,Entered_By
+1999-03-23,Press 7,PX-200,Cure_Zone_Temp,,45.0,"Initial setpoint per installation record PE-INST-042",K.Doraiswamy
+2001-09-10,Press 7,PX-200,Cure_Zone_Temp,45.0,42.3,"Per Eng Note 05-Sep-2001 (Ramachandran) - revised boundary following thermal investigation",S.Ganesan
+2003-01-20,PX200,Cure_Zone_Temp,Cure_Zone_Temp,42.3,42.3,"System format migration, no value change",Quality Admin
+2011-08-20,Press-07,PX-400,Cure_Zone_Temp,42.3,42.3,"Equipment ID updated per ECO-2011-184; UCL value unchanged per qualification QUAL-2011-021",T.Balakrishnan
+2014-03-15,Press-07,PX-400,Cure_Zone_Temp,42.3,42.3,"Routine annual config audit - value confirmed unchanged",J.Fernandes
+2019-04-25,Press-07,PX-400,Cure_Zone_Temp,42.3,42.3,"Routine annual config audit - value confirmed unchanged",A.Krishnan

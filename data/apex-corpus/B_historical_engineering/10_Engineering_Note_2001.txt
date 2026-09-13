@@ -1,0 +1,38 @@
+[Format spec: 1-page PDF, short internal engineering note, plain memo format, no formal approval matrix (typical for a "note" rather than a formal report of that era)]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+ENGINEERING NOTE
+
+Ref: ENG-NOTE-2001-09                                  Date: 05-SEP-2001
+From: Dr. N. Ramachandran, Process Engineer
+To: P. Sundaram (Quality), K. Doraiswamy (Plant Engg), M. Elango (Production)
+Subject: Press 7 (PX-200) cure zone -- revised upper operating boundary
+
+Further to the characterization study (PE-STUDY-2001-07), investigation
+report (INV-2001-014), and Quality review of 14-Jun-2001 (ref QM-2001-06),
+this note confirms the revised upper operating boundary for the Press 7
+cure zone.
+
+Study data showed onset of thermal instability (controller overshoot,
+part quality effects) developing above approximately 42 deg C during
+extended (multi-hour) production runs, with the effect becoming clearly
+problematic by 43 deg C.
+
+To provide adequate margin below this onset while minimizing unnecessary
+impact to cycle time, the following boundary is established:
+
+    Cure zone upper control limit (UCL):  42.3 deg C
+
+This reflects the upper edge of the region confirmed stable across all
+extended trial runs in PE-STUDY-2001-07 (the 42 deg C trial showed only
+minor, self-correcting drift with no quality impact, whereas 43 deg C
+showed clear degradation) plus a small additional margin (+0.3 C) to
+account for normal sensor/controller tolerance, consistent with our
+standard practice of not setting operating limits exactly at a trial
+setpoint value.
+
+Please update SOP-CURE-07 and the SPC configuration accordingly. The
+interim 4-hr continuous-run cap (per M. Elango, 25-Apr-01) may be lifted
+once the new limit is in effect and confirmed via SPC.
+
+- N. Ramachandran

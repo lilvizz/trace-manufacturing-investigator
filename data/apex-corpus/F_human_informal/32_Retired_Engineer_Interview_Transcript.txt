@@ -1,0 +1,86 @@
+APEX THERMAL COMPONENTS -- KNOWLEDGE CAPTURE PROGRAM
+Interview Transcript (lightly edited for clarity)
+
+Subject: Dr. N. Ramachandran (retired 2019, formerly Process Engineer,
+         Chennai Plant 2, 1997-2019)
+Interviewer: Priya Ramesh, HR Knowledge Capture Coordinator
+Date: 02-MAR-2024
+Location: Phone interview
+Purpose: General institutional knowledge capture, retired senior staff
+         (part of ongoing program, not specific to any single equipment
+         question)
+
+---
+
+PRIYA: Thanks for making time for this, Dr. Ramachandran. We're just
+trying to capture some of the history from your years here before it's
+lost. Can you tell me a bit about the Press 7 line, the thermal curing
+one?
+
+RAMACHANDRAN: Oh yes, Press 7. I spent a lot of time on that one in the
+early days. That was the PX-200 machine, very early in my career here.
+
+PRIYA: I understand there was some kind of temperature issue with that
+machine?
+
+RAMACHANDRAN: Yes, yes. This was 2001, if I remember right. We had
+some alarm events, the temperature was overshooting during the long
+runs. I did a whole characterization study on it -- ran trials at
+different temperatures, found that above about 42 degrees the
+controller started struggling to keep it stable during extended runs.
+Something to do with the heating element response time in one of the
+zones, zone two I believe.
+
+PRIYA: And what happened after that?
+
+RAMACHANDRAN: We set a new limit. I want to say... 42.3? Something
+like that. It's been so long. The idea was to give some margin below
+where things started going unstable, but not so conservative that it
+hurt the cycle time too much. I remember there being some discussion
+about whether to just round down to 40, but I felt that was more
+conservative than the data supported.
+
+PRIYA: Do you remember why 42.3 specifically, rather than a rounder
+number?
+
+RAMACHANDRAN: [laughs] Honestly, at this point, not exactly. I know it
+was tied to the trial data somehow -- the trials were at whole and half
+degree marks, 42, 43, and so on -- so there was some margin added on
+top of the highest stable point. But whether it was exactly this
+calculation or that one, I couldn't swear to it today. There should be
+a note I wrote around that time, if it's still in the files.
+
+PRIYA: The plant later replaced that machine, I believe? The PX-400?
+
+RAMACHANDRAN: Yes, 2011 I think, after I'd moved partly onto other
+projects by then. I wasn't heavily involved in that swap.
+
+PRIYA: Do you know if the temperature limit was reviewed again after
+the new machine went in?
+
+RAMACHANDRAN: You know, I honestly don't know. I have a vague memory
+of someone -- might have been Padmanabhan, he took over that area for a
+while -- doing some kind of follow-up study on the new machine. But I
+couldn't tell you what came of it, whether anything was changed. I was
+mostly off on the Line 12 commissioning by then and didn't follow the
+Press 7 story closely after that. You'd want to ask him, or check
+whatever's on file from around 2014, if my memory of the timing is even
+right.
+
+PRIYA: That's very helpful, thank you. Anything else about that
+equipment you think is worth recording?
+
+RAMACHANDRAN: Just that it was a good learning experience for me, that
+project. Taught me not to trust a vendor's rated range without doing
+your own extended trials. That lesson stuck with me the rest of my
+career here.
+
+PRIYA: Thank you very much, Dr. Ramachandran.
+
+--- End of Transcript ---
+
+[Interviewer's note appended: Subject's account of the 2001 study and
+limit-setting is consistent with what's on file from that period.
+Subject's recollection becomes explicitly uncertain regarding any
+post-2011 review; he did not claim knowledge of the outcome of any such
+review and specifically deferred to file records and to Padmanabhan.]

@@ -1,0 +1,91 @@
+[Format spec: 7-page PDF, formal process requalification study, most rigorous/detailed document in the corpus]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+PROCESS REQUALIFICATION STUDY
+
+Report No: QUAL-2014-009                              Date: 27-MAR-2014
+Prepared by: Dr. R. Padmanabhan, Process Engineer
+Reviewed by: J. Fernandes, Quality Engineer
+Approved by: V. Iyer, Sr. Manufacturing Engineer
+
+1. BACKGROUND AND OBJECTIVE
+Since PX-400 was qualified in 2011 as an equipment-swap within the
+existing 36.0-42.3 deg C process envelope (see QUAL-2011-021), production
+volumes on Press-07 have increased and cycle-time optimization has become
+a business priority. This study was commissioned by the Manufacturing
+Engineering group to characterize PX-400's actual thermal stability
+envelope, independent of the legacy PX-200-derived limit, to inform
+potential future cycle-time optimization work.
+
+Note: This study is a characterization exercise. It does not itself
+constitute an approval to change the production operating limit; any
+limit change would require a separate ECO per standard change control
+(QP-002 Section 7).
+
+2. METHOD
+Extended trials (6-8 hr continuous runs, representative of full
+production shifts) were conducted on PX-400 at target cure-zone
+temperatures of 40, 42, 42.3 (current UCL, as control), 43, 44, and
+45 deg C, using the same part quality acceptance criteria as the
+original 2001 PX-200 study for comparability.
+
+3. RESULTS
+
+  Target Temp (C)   Duration   Max Deviation   Part Quality        Notes
+  ---------------   --------   -------------   ----------------    -----
+  40                8.0 hr     +/-0.12 C        Acceptable, 0%       Stable
+                                                  blister
+  42                8.0 hr     +/-0.14 C        Acceptable, 0%       Stable
+                                                  blister
+  42.3 (control)    8.0 hr     +/-0.13 C        Acceptable, 0%       Stable
+                                                  blister
+  43                8.0 hr     +/-0.15 C        Acceptable, 0%       Stable
+                                                  blister
+  44                7.5 hr     +/-0.19 C        Acceptable, 0.2%     Stable, no
+                                                  blister              overshoot
+                                                                       events
+  45                7.0 hr     +/-0.24 C        Marginal, 1.8%       Slight increase
+                                                  blister              in blister rate
+                                                                       at upper end;
+                                                                       no controller
+                                                                       instability
+                                                                       observed
+
+4. DISCUSSION
+Unlike the 2001 PX-200 characterization (PE-STUDY-2001-07), which showed
+controller overshoot and increasing instability above ~42 deg C due to
+zone-2 heater response lag, the PX-400 unit's RTD sensor array and
+HPS-CTRL v3.2 controller (with faster PID response and improved thermal
+mass distribution) show NO comparable instability through at least 44 deg
+C, and no controller-level instability even at 45 deg C. The modest
+increase in blister rate observed at 45 deg C appears to be a part-quality
+effect (likely related to polymer degradation kinetics at that
+temperature) rather than a control-stability issue, and is a materially
+different failure mode from the 2001 finding.
+
+The PX-400 platform did not show a comparable instability onset within
+the range tested here. However, this study characterizes control-loop
+and short-to-medium-term part quality behavior only; it does not address
+longer-term material or equipment effects, nor does it constitute a
+revalidated production specification.
+
+5. CONCLUSION
+PX-400 demonstrates stable thermal control across a broader range
+(through at least 44 deg C) than the current 42.3 deg C production UCL,
+under the trial conditions tested. This is presented as engineering
+characterization data for future consideration. It does not, in itself,
+change SOP-CURE-07 or the SPC configuration, and no such change is
+proposed as part of this study.
+
+6. RECOMMENDATION
+If cycle-time optimization via an expanded operating window is desired
+in future, this data would support scoping a formal limit-change ECO
+(including updated SPC configuration, SOP revision, and a full
+justification memo per QP-002 Section 7). No such ECO is being raised
+at this time; this study is filed for reference.
+
+7. DISTRIBUTION
+Process Engineering file, Quality file, Manufacturing Engineering (cc:
+V. Iyer)
+
+--- End of Report QUAL-2014-009 ---

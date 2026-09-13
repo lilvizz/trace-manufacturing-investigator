@@ -1,0 +1,48 @@
+[Format spec: single-page PDF, plant asset-management letterhead, table-based layout, printed from Asset Management System — Report AMS-RPT-014]
+
+APEX THERMAL COMPONENTS
+Chennai Plant 2 — Asset Master Record
+Report: AMS-RPT-014                                          Printed: 2024-11-18 09:41 IST
+Printed by: S. Kannan, Asset Data Coordinator
+
+--------------------------------------------------------------------
+ASSET IDENTIFICATION
+--------------------------------------------------------------------
+Asset ID:                 7714
+Asset Name:                Press-07
+Common References:         Press 7, P07, Press-07
+Location:                   Chennai Plant 2 / Line 7 / Bay 3
+Asset Class:                Thermal Curing Press
+Status:                     Active
+
+--------------------------------------------------------------------
+CURRENT EQUIPMENT
+--------------------------------------------------------------------
+Equipment Model:            PX-400
+Equipment Manufacturer:     Halberd Process Systems Ltd.
+Install Date:                2011-08-15
+Predecessor Equipment:       PX-200 (Asset 7714, retired 2011-08-01; see ECO-2011-184)
+Control System:              HPS-CTRL v3.2
+
+--------------------------------------------------------------------
+PROCESS ASSOCIATION
+--------------------------------------------------------------------
+Process:                    Thermal curing of precision polymer components
+Product Families:           PC-Series precision polymer housings
+Governing SOP:               SOP-CURE-07, current revision v8 (see doc 25)
+
+--------------------------------------------------------------------
+CRITICAL PROCESS PARAMETER
+--------------------------------------------------------------------
+Parameter:                  Cure-zone temperature
+Upper Control Limit (UCL):  42.3 deg C
+Lower Control Limit (LCL):  36.0 deg C
+Limit Source (per SPC config): See SPC_Current_Configuration (SPC system record; no originating document referenced in system field "Basis")
+
+--------------------------------------------------------------------
+NOTES
+--------------------------------------------------------------------
+- Asset record migrated from legacy AMS-1 to AMS-2 system in 2016. Some historical fields (pre-2011) were carried forward as free text and not independently re-verified during migration.
+- For equipment history prior to 2011, refer to PX-200 installation and maintenance records (Asset 7714 legacy file).
+
+--- End of Report AMS-RPT-014 ---

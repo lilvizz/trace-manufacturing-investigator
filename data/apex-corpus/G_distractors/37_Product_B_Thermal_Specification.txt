@@ -1,0 +1,31 @@
+[Format spec: 2-page PDF, design engineering product specification]
+
+APEX THERMAL COMPONENTS -- DESIGN ENGINEERING
+PRODUCT THERMAL SPECIFICATION
+
+Doc No: SPEC-PRODB-TH-01                              Date: 01-SEP-2013
+Product: Product B (precision polymer connector housing, non-PC-Series)
+Prepared by: Design Engineering Dept
+
+1. THERMAL PROCESSING REQUIREMENT
+Product B's polymer compound (Grade PB-7, different resin formulation
+from the PC-Series material used on Press-07/Line 7) has a recommended
+maximum processing temperature of 42.0 deg C during thermal cure, per
+resin manufacturer datasheet (ResinCo Technical Bulletin TB-114, 2012),
+to avoid discoloration in this specific colorway.
+
+2. APPLICABLE EQUIPMENT
+Product B is produced on Line 4 (Press-04, Equipment PX-350), not on
+Line 7. This specification applies only to Product B production and
+has no bearing on other products, equipment, or lines.
+
+3. NOTE
+This value (42.0 C) is a material-property-driven limit specific to the
+PB-7 resin's discoloration threshold, established via the resin
+manufacturer's datasheet rather than an internal thermal characterization
+study.
+
+4. APPROVAL
+Design Engineering Lead: (signature on file)                01-Sep-2013
+
+--- End of SPEC-PRODB-TH-01 ---

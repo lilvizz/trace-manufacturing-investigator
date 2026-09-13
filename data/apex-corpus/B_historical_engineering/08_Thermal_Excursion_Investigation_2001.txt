@@ -1,0 +1,63 @@
+[Format spec: 4-page PDF, joint Quality/Engineering investigation report template]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+THERMAL EXCURSION INVESTIGATION REPORT
+
+Report No: INV-2001-014                                Date: 30-JUL-2001
+Prepared jointly by: Dr. N. Ramachandran (Process Engineering),
+                      P. Sundaram (Quality Manager)
+
+1. BACKGROUND
+Two high-temperature alarm events were recorded on Press 7 (PX-200) during
+extended production runs:
+  - WO-01-0142, 22-APR-2001, batch 4471-4479
+  - WO-01-0198, 02-JUN-2001
+
+Both events occurred during continuous runs exceeding 5 hours, with alarm
+triggers at cure-zone temperatures above the then-interim 45.0 deg C
+setpoint threshold being approached (peak recorded excursions of 44.6 C
+and 45.3 C respectively). No mechanical fault was identified by Maintenance
+(see WO-01-0143).
+
+2. RELATED STUDY
+This investigation follows and is informed by the Process Engineering
+characterization study (PE-STUDY-2001-07, 05-Jul-2001), which independently
+identified thermal instability developing above approximately 42 deg C
+during extended runs, attributed to zone-2 heater element response lag.
+
+3. ROOT CAUSE ANALYSIS
+The field alarm events are consistent with the instability mechanism
+identified in PE-STUDY-2001-07: as continuous run duration increases,
+zone-2 controller correction response degrades, permitting temperature
+excursions above setpoint that grow larger with sustained operation.
+The interim 45.0 deg C operating boundary set at installation (1999,
+based on a standard 10% derate from vendor rated maximum) does not
+account for this time-dependent degradation and provides insufficient
+margin for extended production runs.
+
+4. RECOMMENDATION
+Recommend Quality and Process Engineering establish a revised, more
+conservative upper operating boundary for the cure zone that:
+  (a) provides adequate margin below the onset of instability observed
+      in the 42-43 deg C region (per PE-STUDY-2001-07), and
+  (b) accounts for realistic extended-run durations representative of
+      full production shifts (6+ hours), not just short-duration testing.
+
+A cross-functional review was held (Quality meeting, 14-Jun-2001; see
+minutes ref QM-2001-06) to discuss these findings and agree in principle
+on a conservative revised boundary. Process Engineering to issue a
+follow-up engineering note specifying the final numeric limit, once the
+supporting margin calculation is finalized. This investigation report is
+being formally issued following that discussion, incorporating feedback
+from the meeting.
+
+5. INTERIM ACTION
+Pending the revised limit, Production has been instructed (verbal,
+Production Supervisor M. Elango, 25-Apr-2001) to limit continuous run
+duration to 4 hours where cure-zone target exceeds 40 deg C, until a
+formal limit is issued.
+
+6. DISTRIBUTION
+Quality file, Process Engineering file, Plant Engineering (cc), Production (cc)
+
+--- End of Report INV-2001-014 ---

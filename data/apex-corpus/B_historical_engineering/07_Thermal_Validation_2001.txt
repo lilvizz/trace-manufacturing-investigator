@@ -1,0 +1,75 @@
+[Format spec: 6-page PDF, process engineering study report, includes data table and hand-annotated margin note scanned in (typical of era), slightly faded scan quality]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+PROCESS ENGINEERING STUDY REPORT
+
+Report No: PE-STUDY-2001-07                            Date: 05-JUL-2001
+Title: Thermal Curing Process Characterization -- Press 7 (PX-200)
+Prepared by: Dr. N. Ramachandran, Process Engineer
+Reviewed by: K. Doraiswamy, Plant Engineering Manager
+
+1. OBJECTIVE
+Following two years of production on Press 7 (PX-200), this study was
+commissioned to characterize the cure-zone thermal profile across an
+extended operating range, in support of finalizing production operating
+limits (the original 1999 installation used an interim upper limit of
+45.0 deg C pending this study -- see Installation Record PE-INST-042).
+
+2. METHOD
+Extended production trials were run at target cure-zone temperatures of
+36, 38, 40, 42, 43, and 44 deg C, each sustained for a minimum of 6 hours
+of continuous operation (representative of a full production shift),
+with part quality assessed at 30-minute intervals.
+
+3. OBSERVATIONS
+
+  Target Temp (C)   Duration    Part Quality           Thermal Stability
+  ---------------   --------    ----------------       -----------------
+  36                6.5 hr      Acceptable, slow cure   Stable throughout
+  38                6.0 hr      Acceptable               Stable throughout
+  40                6.0 hr      Acceptable               Stable throughout
+  42                6.5 hr      Acceptable, some         Minor drift observed
+                                 surface variation        after hour 4; zone 2
+                                                            thermocouple showed
+                                                            occasional overshoot
+                                                            to ~43.5 before
+                                                            controller correction
+  43                6.0 hr      Marginal -- isolated      Noticeable instability
+                                 blistering noted on       after hour 3; two
+                                 ~4% of parts in later      overshoot events to
+                                 portion of run             ~45.2, controller
+                                                             correction slower
+                                                             than at lower setpoints
+  44                4.5 hr      Run terminated early --   Significant instability;
+                                 blistering rate rose to    overshoot to 46.8 at
+                                 ~11% of parts; run          hour 3, sustained
+                                 stopped per operator        above target for
+                                 discretion                  ~12 min before
+                                                              correction
+
+  [Margin note, handwritten, appears added after initial typing:]
+  "42 & 43 runs both show overshoot behavior developing after several hours
+  -- controller response time degrades as zone 2 element ages? Worth flagging
+  to Quality before we finalize a number. -NR"
+
+4. DISCUSSION
+The data indicate that thermal stability of the PX-200 cure zone begins to
+degrade above approximately 42 deg C during extended (multi-hour) production
+runs, likely related to controller response lag combined with heater element
+thermal mass at zone 2. Below 40 deg C, no instability was observed across
+the full trial duration. The interim 45.0 deg C limit set at installation
+does not appear supportable given the overshoot and quality effects observed
+at 43-44 deg C.
+
+5. RECOMMENDATION
+Recommend Quality and Engineering jointly review these findings to establish
+a revised production operating boundary that provides adequate margin below
+the onset of observed instability (approximately 42-43 deg C region). See
+forthcoming investigation report for root-cause detail on the April and
+June 2001 field alarm events (WO-01-0142, WO-01-0198), which appear
+consistent with the borderline behavior observed here.
+
+6. DISTRIBUTION
+Quality (P. Sundaram), Plant Engineering (K. Doraiswamy), Production (M. Elango)
+
+--- End of Report PE-STUDY-2001-07 ---

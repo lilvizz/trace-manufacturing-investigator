@@ -1,0 +1,59 @@
+[Format spec: 3-page PDF, formal ECO template with approval matrix, Engineering Change Control letterhead]
+
+APEX THERMAL COMPONENTS
+ENGINEERING CHANGE ORDER
+
+ECO No: ECO-2011-184                                    Status: APPROVED / CLOSED
+Originator: V. Iyer, Sr. Manufacturing Engineer          Date Raised: 2011-04-02
+Effective Date: 2011-08-15
+
+1. TITLE
+Replacement of PX-200 thermal curing press with PX-400 at Press-07 (Line 7, Asset 7714)
+
+2. REASON FOR CHANGE
+PX-200 (installed 1999) is approaching end-of-support. Vendor (Halberd Process
+Systems) has confirmed spare parts for PX-200 controller and heater assemblies
+will no longer be manufactured beyond 2012. Maintenance has flagged increasing
+service risk (ref. WO-09-0640, WO-11-0090). Replacement with current-generation
+PX-400 platform is recommended to maintain production continuity.
+
+3. SCOPE OF CHANGE
+  3.1 Physical removal of PX-200 unit from Press-07 position.
+  3.2 Installation of PX-400 unit (same footprint, upgraded controller HPS-CTRL v3.2).
+  3.3 Recommissioning and qualification of PX-400 for existing product families
+      (PC-Series precision polymer housings).
+
+4. PROCESS PARAMETERS
+  This change replaces equipment only. Existing validated process parameters,
+  including the cure-zone upper control limit of 42.3 deg C (per SOP-CURE-07 v5
+  and SPC configuration in force at time of this ECO), are to be CARRIED FORWARD
+  UNCHANGED for the qualification run. Any parameter changes beyond equipment-name
+  updates would require a separate ECO and re-validation.
+
+5. AFFECTED DOCUMENTS
+  - SOP-CURE-07 (equipment reference update only, see rev. history)
+  - SPC configuration (equipment ID update)
+  - Asset Master Record (Asset 7714)
+
+6. QUALIFICATION REQUIREMENT
+  New equipment to be qualified per standard Process Qualification Protocol
+  before release to full production. See PX400_Qualification_2011 (Engineering).
+
+7. APPROVAL
+
+  Role                        Name                  Signature/Date
+  ----------------------      ------------------    -------------------
+  Originator                  V. Iyer               02-Apr-2011
+  Plant Engineering Mgr       K. Doraiswamy          08-Apr-2011
+  Quality Manager             P. Sundaram            11-Apr-2011
+  Production Manager          M. Elango              12-Apr-2011
+  Plant Manager (final)       R. Natesan             15-Apr-2011
+
+8. IMPLEMENTATION RECORD
+  PX-200 removed:              2011-08-01 (see maintenance WO-11-0201)
+  PX-400 installed:             2011-08-15
+  Commissioning completed:      2011-08-22 (see Commissioning Report)
+  Qualification completed:      2011-09-14 (see Qualification Report)
+  ECO Closed:                    2011-09-20
+
+--- End of ECO-2011-184 ---

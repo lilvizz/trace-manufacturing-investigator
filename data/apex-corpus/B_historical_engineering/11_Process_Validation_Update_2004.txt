@@ -1,0 +1,50 @@
+[Format spec: 3-page PDF, process engineering validation update template]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+PROCESS VALIDATION UPDATE
+
+Report No: PE-VAL-2004-03                              Date: 19-MAY-2004
+Prepared by: S. Venkataraman, Process Engineer
+Reviewed by: P. Sundaram, Quality Manager
+
+1. PURPOSE
+Periodic (3-yearly) confirmation of process validation status for Press 7
+(PX-200) cure process, per Corporate Quality Policy QP-004 (revalidation
+interval requirement).
+
+2. SCOPE
+Confirm that the cure process continues to perform within the established
+operating boundary (UCL 42.3 deg C, per Engineering Note ENG-NOTE-2001-09)
+under current production conditions.
+
+3. METHOD
+Reviewed 24 months of SPC data (2002-2004) for cure-zone temperature and
+associated part quality metrics (blister rate, dimensional conformance).
+No new extended-range trials were conducted as part of this update; this
+is a confirmation of continued stability under the existing boundary,
+not a re-derivation of the boundary itself.
+
+4. FINDINGS
+  - Cure-zone temperature has remained within 36.0-42.3 deg C for
+    >99.7% of production time over the review period.
+  - Blister rate has remained below 0.5% throughout, consistent with
+    stable operation.
+  - No high-temperature alarm events recorded since the 2001 boundary
+    revision (compare to 2 events in the 6 months prior to the revision).
+  - Occasional brief excursions to 42.4-42.6 deg C noted (11 instances
+    over 24 months), all self-corrected within 2 minutes, none associated
+    with quality impact. Not considered significant.
+
+5. CONCLUSION
+The existing operating boundary (UCL 42.3 deg C, established 2001)
+continues to be appropriate for current production conditions on the
+PX-200 unit. No change recommended.
+
+6. NEXT REVIEW
+Per QP-004, next periodic revalidation due 2007 or upon any equipment/
+process change, whichever comes first.
+
+7. DISTRIBUTION
+Quality file, Process Engineering file
+
+--- End of Report PE-VAL-2004-03 ---

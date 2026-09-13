@@ -1,0 +1,51 @@
+[Format spec: 2-page PDF, scanned-typewriter era formatting, slightly faded/OCR-imperfect appearance, plant engineering letterhead circa 1999]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+EQUIPMENT INSTALLATION RECORD
+
+Form No: PE-INST-042                              Date: 18-MAR-1999
+Prepared by: R. Subramaniam, Commissioning Engineer
+Reviewed by: K. Doraiswamy, Plant Engineering Manager
+
+1. EQUIPMENT DETAILS
+
+  Equipment Type ..... Thermal Curing Press
+  Model ............... PX-200
+  Manufacturer ........ Halberd Process Systems Ltd. (UK)
+  Serial No ........... HPS-PX200-0341
+  Line ................ Line 7
+  Asset No ............ 7714 (assigned per Plant Asset Register)
+  Installed at ........ Press position "Press 7" / Bay 3
+
+2. EQUIPMENT RATED SPECIFICATIONS (per vendor manual, Section 4)
+
+  Cure zone temp range (rated) ..... 15 - 65 deg C
+  Heating element type .............. Resistive, 3-zone
+  Temperature sensor type ........... Type-K thermocouple x3
+  Controller ......................... HPS-CTRL v1.0
+
+3. INITIAL PROCESS SET POINTS (per Process Engg. instruction, ref. memo PE-99-011)
+
+  Cure zone target temp ............. 38.0 deg C
+  Cure zone upper limit (interim) ... 45.0 deg C  [interim -- to be confirmed
+                                                     following process validation]
+  Cure time .......................... 90 sec (nominal)
+
+  Note: Upper limit of 45.0 C set per vendor rated range with standard
+  10% derating; PENDING formal process validation study to establish
+  production operating boundary. See Process Engineering for validation
+  schedule.
+
+4. COMMISSIONING RESULT
+
+  Mechanical checkout ............... PASS (18-MAR-99)
+  Electrical checkout ................ PASS (19-MAR-99)
+  Initial run-in (48 hrs) ............ PASS (22-MAR-99), no anomalies noted
+
+5. SIGN-OFF
+
+  Commissioning Engineer:  R. Subramaniam       Date: 22-MAR-1999
+  Plant Engineering Mgr:   K. Doraiswamy         Date: 23-MAR-1999
+  Production Supervisor:   M. Elango             Date: 23-MAR-1999
+
+--- distribution: Plant Engg file, Production file, Quality file (cc) ---

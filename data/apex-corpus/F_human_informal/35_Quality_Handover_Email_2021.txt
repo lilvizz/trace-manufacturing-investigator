@@ -1,0 +1,67 @@
+[Format spec: .msg email export, shown as plain text with standard email headers]
+
+From: A. Krishnan <a.krishnan@apexthermal.example>
+To: J. Fernandes <j.fernandes@apexthermal.example>
+Subject: Quick Q before I hand off Press-07 quality file
+Date: 18-May-2021 11:24 IST
+
+Hi Jerome,
+
+As I'm moving to the corporate quality role next month, wanted to get
+your take on something before I hand off my Press-07 files to you
+properly next week.
+
+Auditor asked me last quarter (during the internal ISO surveillance
+audit prep) what the basis is for the 42.3 C cure zone limit on
+Press-07. I gave a general answer about it being part of the
+originally validated process, which seemed to satisfy them at the
+time, but I realized afterward I don't actually have a specific
+document I could point to if they'd pushed harder next time. Do you
+know if there's something more concrete on file? I looked in the SOP
+and SPC config but neither one references an actual source document,
+just the number itself.
+
+Thanks,
+Anand
+
+---
+
+From: J. Fernandes <j.fernandes@apexthermal.example>
+To: A. Krishnan <a.krishnan@apexthermal.example>
+Subject: RE: Quick Q before I hand off Press-07 quality file
+Date: 18-May-2021 15:47 IST
+
+Hi Anand,
+
+I did the 2014 SPC review on that line, and my understanding at the
+time was the same as yours -- that it's part of the originally
+validated process from way back, before my time here. I don't have a
+specific reference doc for it either, to be honest, I just treated it
+as an existing, established requirement when I reviewed it in 2014 and
+didn't dig further since nothing had changed and the process was
+running well within it.
+
+If it comes up again in an audit, I'd suggest checking with Process
+Engineering (Rajagopal now, I think) or the old Engineering archive --
+I have a vague memory there being something from the original PX-200
+era on this, but I've never actually pulled it myself.
+
+Sorry I can't give you more than that. Good luck with the corporate
+role!
+
+Jerome
+
+---
+
+From: A. Krishnan <a.krishnan@apexthermal.example>
+To: J. Fernandes <j.fernandes@apexthermal.example>
+Subject: RE: RE: Quick Q before I hand off Press-07 quality file
+Date: 18-May-2021 16:02 IST
+
+No worries, appreciate the reply. I'll note it as an open item in the
+handover pack for whoever takes over quality on Line 7 -- worth someone
+actually chasing down the original document at some point, more for
+our own audit-readiness than because I think there's an actual problem
+with the number.
+
+Anand

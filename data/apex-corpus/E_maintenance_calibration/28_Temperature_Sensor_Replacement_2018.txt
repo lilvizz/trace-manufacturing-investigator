@@ -1,0 +1,40 @@
+[Format spec: 1-page PDF, maintenance work order completion report]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+MAINTENANCE WORK ORDER COMPLETION REPORT
+
+WO No: WO-18-0322                                     Date Completed: 12-SEP-2018
+Equipment: Press-07 / PX-400 / Asset 7714
+Technician: D. Moorthy
+Supervisor Sign-off: R. Palanisamy
+
+ISSUE
+During annual calibration (see Temperature_Sensor_Calibration_History,
+2017 cycle), RTD sensor "RTD-7714-2" (zone 2) showed a marginal as-found
+deviation of 0.24 deg C and was flagged for monitoring. At the 2018
+calibration cycle, the same sensor showed as-found deviation of 0.31
+deg C, exceeding the 0.30 deg C acceptance threshold per
+Calibration_Procedure_v4. Sensor failed calibration.
+
+ACTION TAKEN
+Replaced failed RTD sensor with new unit (designated "S-7714-2" /
+RTD-7714-2(new) in subsequent calibration records). New sensor
+calibrated immediately post-installation: as-found N/A (new), as-left
+deviation 0.01 deg C. PASS.
+
+VERIFICATION
+Ran 3 production batches post-replacement (batches 88214-88216).
+All within normal quality parameters. No process parameter changes
+made or required as part of this replacement -- like-for-like sensor
+swap.
+
+NOTES
+This is a routine sensor-drift replacement, consistent with expected
+RTD service life (~6 years for zone 2 position, which runs slightly
+hotter than zones 1/3 due to proximity to heater element). Not
+indicative of any process control issue.
+
+Sign-off: D. Moorthy, Maintenance Technician -- 12-Sep-2018
+Reviewed: R. Palanisamy, Maintenance Supervisor -- 13-Sep-2018
+
+--- End of Report WO-18-0322 ---

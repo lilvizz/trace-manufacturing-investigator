@@ -1,0 +1,11 @@
+Parameter,Asset,Equipment,LCL,Target,UCL,Alarm_High,Alarm_HighHigh,Basis_Field,Last_Modified,Modified_By
+Cure_Zone_Temp,Press-07,PX-400,36.0,38.5,42.3,42.3,44.0,"See Engineering file",2011-08-20,T.Balakrishnan
+Cure_Zone_Temp,Press-05,PX-300,35.0,39.0,44.0,44.0,46.0,"See Engineering file",2016-05-02,S.Venkataraman
+Cure_Time,Press-07,PX-400,80,85,90,,,"SOP-CURE-07",2011-08-20,T.Balakrishnan
+Cycle_Pressure,Press-07,PX-400,2.1,2.4,2.7,,,"SOP-CURE-07",2011-08-20,T.Balakrishnan
+
+[Note: "Basis_Field" is a free-text field in the SPC export tool; for
+Press-07 cure-zone temp it has read "See Engineering file" since the
+system was migrated from the legacy SPC-1 platform in 2011 and has not
+been updated with a specific document reference since. Field is
+editable but optional; not all parameters have it populated.]

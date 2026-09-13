@@ -1,0 +1,24 @@
+[Format spec: 1-page PDF, routine quality SPC review template - noticeably terser than earlier reviews, consistent with reviews becoming more perfunctory over time]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+SPC PERIODIC REVIEW
+
+Report No: SPC-REV-2020-02                            Date: 11-FEB-2020
+Prepared by: A. Krishnan, Quality Engineer
+Scope: Press-07 (PX-400) cure-zone temperature control
+
+1. CURRENT CONTROLS
+  UCL: 42.3 deg C (existing requirement, unchanged)
+  LCL: 36.0 deg C
+  Cpk: 1.94 (last 12 months)
+
+2. REVIEW FINDINGS
+  Process stable. No alarm events. No changes since last review.
+
+3. RECOMMENDATION
+  Continue current controls unchanged.
+
+4. SIGN-OFF
+  A. Krishnan -- 11-Feb-2020
+
+--- End of Report SPC-REV-2020-02 ---

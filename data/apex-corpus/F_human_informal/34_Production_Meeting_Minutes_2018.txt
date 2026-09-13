@@ -1,0 +1,43 @@
+[Format spec: DOCX, routine weekly production meeting minutes]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+PRODUCTION MEETING MINUTES
+
+Date: 06-NOV-2018
+Attendees: R. Palanisamy (Production Mgr), A. Krishnan (Quality),
+           M. Rajagopal (Process Engg), Line 7 shift leads
+Recorded by: S. Iqbal
+
+AGENDA ITEM 3: Line 7 (Press-07) cycle time discussion
+
+Discussion:
+- R. Palanisamy raised that Line 7 throughput target has increased 8%
+  for Q1 2019 and asked whether cycle time on Press-07 could be
+  shortened.
+- M. Rajagopal noted cure time is already at 85 sec per SOP-CURE-07 v6/
+  v7, and cure temperature is capped at 42.3 C per current SPC config.
+  Mentioned (informally, from memory) that there was some study a few
+  years back suggesting the PX-400 unit could handle somewhat higher
+  temps than that without instability, which in theory could allow a
+  shorter cure time, but wasn't sure of the details or whether it was
+  ever formally pursued.
+- A. Krishnan asked if that study is on file; M. Rajagopal said he'd
+  check but believed it was done by Padmanabhan before he moved to
+  Line 12, "around 2014 maybe."
+- R. Palanisamy asked for a recommendation for the Q1 target either
+  way.
+- No conclusion reached in this meeting. Agreed to revisit once
+  M. Rajagopal has located and reviewed the referenced study.
+
+ACTION ITEMS:
+  1. M. Rajagopal - locate and review 2014 PX-400 characterization
+     study, report back with recommendation on feasibility of any
+     cycle-time / temperature change - due next production meeting
+  2. R. Palanisamy - hold Q1 target discussion pending item 1
+
+[No record found of this action item being closed out in subsequent
+production meeting minutes reviewed; Q1 2019 target appears to have
+been met via other line-balancing changes per separate production
+planning documents, cure temperature/time on Press-07 unchanged.]
+
+--- End of Minutes, 06-Nov-2018 ---

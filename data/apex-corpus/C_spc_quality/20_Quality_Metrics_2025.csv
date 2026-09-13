@@ -1,0 +1,39 @@
+Date,Shift,AvgCureTemp_C,MaxCureTemp_C,MinCureTemp_C,BlisterRate_pct,PartsProduced,Notes
+2025-08-01,A,38.4,42.1,36.2,0.0,412,
+2025-08-01,B,38.6,42.3,36.4,0.0,398,
+2025-08-02,A,38.5,42.0,36.1,0.0,405,
+2025-08-02,B,38.5,42.2,36.3,0.1,410,minor surface variation on 1 part, not blister-related
+2025-08-03,A,38.3,41.9,36.0,0.0,388,
+2025-08-04,A,38.7,42.6,36.5,0.0,415,brief excursion to 42.6, self-corrected in <2 min, no quality impact
+2025-08-04,B,38.4,42.1,36.2,0.0,401,
+2025-08-05,A,38.5,42.0,36.3,0.0,409,
+2025-08-05,B,38.6,42.2,36.4,0.0,398,
+2025-08-06,A,38.4,41.8,36.1,0.0,412,
+2025-08-06,B,38.5,42.0,36.2,0.0,406,
+2025-08-07,A,38.6,42.3,36.4,0.0,399,
+2025-08-08,A,38.3,41.7,36.0,0.0,411,
+2025-08-08,B,38.5,42.1,36.2,0.0,403,
+2025-08-09,A,38.4,41.9,36.1,0.0,407,
+2025-08-11,A,38.6,42.4,36.5,0.0,414,brief excursion to 42.4, self-corrected, no quality impact
+2025-08-11,B,38.5,42.0,36.3,0.0,400,
+2025-08-12,A,38.4,41.8,36.1,0.0,409,
+2025-08-12,B,38.5,42.1,36.2,0.0,405,
+2025-08-13,A,38.3,41.7,36.0,0.0,410,
+2025-08-13,B,38.6,42.2,36.4,0.0,397,
+2025-08-14,A,38.5,42.0,36.2,0.0,408,
+2025-08-15,A,38.4,41.9,36.1,0.0,412,
+2025-08-15,B,38.5,42.1,36.3,0.0,401,
+2025-08-18,A,38.6,42.3,36.4,0.0,406,
+2025-08-18,B,38.4,41.8,36.1,0.0,410,
+2025-08-19,A,38.5,42.0,36.2,0.0,404,
+2025-08-19,B,38.5,42.1,36.3,0.0,399,
+2025-08-20,A,38.6,42.5,36.5,0.0,413,brief excursion to 42.5, self-corrected, no quality impact
+2025-08-20,B,38.4,41.9,36.1,0.0,407,
+2025-08-21,A,38.5,42.0,36.2,0.0,411,
+
+[Summary note appended by Quality Data Analyst, A. Krishnan, 2025-09-02:]
+Month-end summary: 3 brief excursions above UCL recorded (42.4-42.6 C
+range), all self-corrected within 2 minutes per controller log, none
+associated with measurable quality impact. Pattern consistent with
+prior years (see historical trend, ~2-4 such events/month, unchanged
+since PX-400 install). No action required per standard practice.

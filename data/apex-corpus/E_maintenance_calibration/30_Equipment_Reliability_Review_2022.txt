@@ -1,0 +1,40 @@
+[Format spec: 3-page PDF, reliability engineering review]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+EQUIPMENT RELIABILITY REVIEW
+
+Report No: REL-2022-011                              Date: 19-AUG-2022
+Prepared by: L. Chandrasekaran, Reliability Engineer
+Scope: Press-07 (PX-400, Asset 7714)
+
+1. PURPOSE
+Periodic reliability review per Corporate Reliability Policy RP-002,
+covering equipment performance since installation (2011).
+
+2. AVAILABILITY & MTBF
+  Uptime (2021): 97.8%
+  MTBF (2021): 412 hours
+  Unplanned downtime events (2021): 4 (total 38 hrs) -- root causes:
+    2x fixture-related minor jams (see WO log)
+    1x controller fan replacement
+    1x scheduled cal extended into unplanned window (staffing)
+
+3. OPERATING PARAMETER TRENDS
+  Cure-zone temperature has operated within 36.0-42.3 deg C control
+  band consistently since 2011 install, with no sustained excursions.
+  This is noted as a contributing factor to the equipment's strong
+  reliability performance (operating comfortably within its control
+  band, well below rated maximum of 70 deg C per vendor spec).
+
+4. RECOMMENDATIONS
+  - Continue current preventive maintenance schedule (90-day inspection
+    cycle).
+  - No reliability-driven changes to process parameters are indicated
+    at this time.
+  - Monitor RTD sensor #2 position (historically shows faster drift,
+    see calibration history) for early signs of recurring drift.
+
+5. DISTRIBUTION
+Reliability Engineering file, Plant Engineering (cc)
+
+--- End of Report REL-2022-011 ---

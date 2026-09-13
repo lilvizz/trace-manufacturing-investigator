@@ -1,0 +1,48 @@
+[Format spec: 2-page PDF, standard ECO template]
+
+APEX THERMAL COMPONENTS
+ENGINEERING CHANGE ORDER
+
+ECO No: ECO-2014-117                                    Status: APPROVED / CLOSED
+Originator: V. Iyer, Sr. Manufacturing Engineer          Date Raised: 2014-02-10
+Effective Date: 2014-03-03
+
+1. TITLE
+Replacement of part-locating fixture on Press-07 (Line 7) -- tooling upgrade
+
+2. REASON FOR CHANGE
+Existing part-locating fixture (Tooling ID FX-7714-A, in service since 2011
+install) shows wear at locating pins causing occasional minor part
+misalignment (see Quality nonconformance log, Q4 2013, 6 occurrences).
+Replacement with upgraded fixture design (FX-7714-B, hardened steel
+locating pins) recommended to reduce misalignment defects.
+
+3. SCOPE OF CHANGE
+  3.1 Removal of fixture FX-7714-A.
+  3.2 Installation of fixture FX-7714-B (drop-in replacement, same mounting
+      interface).
+  3.3 First-article inspection of 20 parts post-installation.
+
+4. PROCESS PARAMETERS
+  No change to thermal process parameters. Cure-zone UCL remains 42.3 deg C
+  per SOP-CURE-07 v5 (unaffected by this change).
+
+5. AFFECTED DOCUMENTS
+  - Tooling register (FX-7714-A retired, FX-7714-B added)
+  - No SOP or SPC changes required.
+
+6. APPROVAL
+
+  Role                        Name                  Date
+  ----------------------      ------------------    -----------
+  Originator                  V. Iyer               10-Feb-2014
+  Plant Engineering Mgr       K. Doraiswamy          14-Feb-2014
+  Quality Manager             J. Fernandes           18-Feb-2014
+  Production Manager          M. Elango              20-Feb-2014
+
+7. IMPLEMENTATION RECORD
+  Fixture replaced: 2014-03-03
+  First-article inspection: PASS (20/20 parts within spec)
+  ECO Closed: 2014-03-10
+
+--- End of ECO-2014-117 ---

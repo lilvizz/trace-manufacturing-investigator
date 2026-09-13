@@ -1,0 +1,36 @@
+[Format spec: 1-page PDF, plant engineering configuration control sheet]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+EQUIPMENT CONFIGURATION SHEET
+
+Doc No: CFG-7714-CURRENT                              Revision: Rev. F
+Prepared by: S. Kannan, Asset Data Coordinator          Date: 2023-02-14
+Supersedes: CFG-7714-CURRENT Rev. E (2019-05-02)
+
+ASSET: Press-07 / Asset 7714 / Line 7
+
+EQUIPMENT: PX-400 (Halberd Process Systems), Serial HPS-PX400-1187
+Controller: HPS-CTRL v3.2 (firmware updated 2021-03, see Maintenance log)
+Sensors: 4x RTD (Pt100), last calibrated per Calibration_Procedure_v4
+
+PROCESS CONTROL PARAMETERS (governing document: SOP-CURE-07, current rev. v8)
+  Cure zone target temp .............. 38.5 deg C
+  Cure zone UCL ....................... 42.3 deg C
+  Cure zone LCL ........................ 36.0 deg C
+  Cure time (nominal) .................. 85 sec
+  Alarm setpoint (high) ................ 42.3 deg C (matches UCL)
+  Alarm setpoint (high-high, shutdown) . 44.0 deg C
+
+REVISION HISTORY (this config sheet)
+  Rev. A (1999): Initial, PX-200, interim UCL 45.0 (superseded)
+  Rev. B (2001): PX-200, UCL revised to 42.3 per Engineering Note (see Eng file)
+  Rev. C (2003): Format update only, no parameter change
+  Rev. D (2011): Equipment updated to PX-400 per ECO-2011-184; UCL unchanged (42.3)
+  Rev. E (2019): Format update, alarm setpoint fields added, UCL unchanged
+  Rev. F (2023): Cosmetic update (added sensor cal reference), UCL unchanged
+
+NOTE: This sheet reflects current configuration only. For basis of the
+42.3 deg C limit, refer to Process Engineering historical files
+(pre-2005 records held in Engineering Archive, Building 2).
+
+--- End of Configuration Sheet CFG-7714-CURRENT Rev. F ---

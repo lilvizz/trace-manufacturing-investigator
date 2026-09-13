@@ -1,0 +1,33 @@
+[Format spec: 2-page PDF, routine quality SPC review template]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+SPC PERIODIC REVIEW
+
+Report No: SPC-REV-2010-04                            Date: 03-NOV-2010
+Prepared by: P. Sundaram, Quality Manager
+Scope: Press 7 (PX-200) cure-zone temperature control
+
+1. PURPOSE
+Annual SPC review per Corporate Quality Policy QP-004.
+
+2. CURRENT CONTROLS
+  UCL: 42.3 deg C (in effect since 2001, per SPC config history)
+  LCL: 36.0 deg C
+  Process capability (Cpk): 1.52 (last 12 months) -- satisfactory
+
+3. REVIEW FINDINGS
+  - No alarm events in 2010.
+  - Process well-centered, minimal drift.
+  - Equipment (PX-200) approaching planned replacement (see Maintenance
+    flag WO-09-0640); replacement planning underway per Plant Engineering.
+
+4. RECOMMENDATION
+  Continue current controls unchanged. Note for Engineering: upcoming
+  equipment replacement should include confirmation that existing
+  controls remain appropriate for new equipment (standard qualification
+  practice).
+
+5. SIGN-OFF
+  P. Sundaram, Quality Manager -- 03-Nov-2010
+
+--- End of Report SPC-REV-2010-04 ---

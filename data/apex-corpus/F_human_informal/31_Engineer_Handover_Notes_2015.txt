@@ -1,0 +1,43 @@
+[Format spec: 2-page DOCX, informal handover memo, personal/conversational tone, not a controlled document]
+
+Handover Notes -- Process Engineering, Press-07 area
+From: R. Padmanabhan (moving to Line 12 project)
+To: M. Rajagopal (taking over Press-07 process ownership)
+Date: 9 Jan 2015
+
+Hi Rajagopal,
+
+Quick notes on Press-07 before I move over to the Line 12 project full
+time. Ravi/IT already transferred the shared drive folders, but a few
+things worth knowing that aren't obvious from just reading the files:
+
+- Cure zone UCL is 42.3C, been that way since the PX-200 days (long
+  before either of us). There's an old eng note from 2001 in the
+  archive if you ever need the background -- basically PX-200 had some
+  overshoot problems above ~42C on long runs.
+
+- I ran a characterization study on the PX-400 back in early 2014
+  (QUAL-2014-009 if you want to pull it) mainly because Manufacturing
+  Engg wanted to know if we had room to play with cycle time. Short
+  version: PX-400's control loop is a lot better than PX-200 ever was,
+  it holds steady well past 42.3, no overshoot issues at all through
+  44, maybe a touch of quality drop-off right at 45.
+
+- That said, I never took it further -- nobody raised the ECO to
+  actually change the number, and honestly with the SOP audit and the
+  fixture change eating up my time that quarter it just didn't happen.
+  V. Iyer saw the study and I don't remember him pushing back on the
+  data, it just wasn't a priority at the time given yields were already
+  good.
+
+- My honest take: leave it as-is until someone runs it through change
+  control properly. The data's worth another look, but that's not the
+  same as a reason to touch the number.
+
+- Other stuff: fixture (FX-7714-B) has been solid since 2014, no
+  complaints. RTD #2 position tends to drift faster than the others,
+  keep an eye on it at cal time.
+
+Good luck, ping me if you get stuck on anything Line 12-related :)
+
+- Padmanabhan

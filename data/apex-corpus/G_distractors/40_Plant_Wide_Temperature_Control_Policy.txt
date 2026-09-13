@@ -1,0 +1,45 @@
+[Format spec: 3-page PDF, corporate policy document, applies plant-wide]
+
+APEX THERMAL COMPONENTS -- CORPORATE QUALITY OFFICE
+CORPORATE POLICY
+
+Doc No: CQ-POL-011                                    Effective Date: 01-JAN-2016
+Title: Plant-Wide Temperature Control Requirements for Thermal Processes
+Owner: Corporate Quality Office
+
+1. PURPOSE
+This policy establishes minimum requirements for the management of
+temperature control limits across all thermal processing equipment at
+Apex Thermal Components facilities.
+
+2. SCOPE
+Applies to all thermal curing, molding, and forming processes across
+all plants.
+
+3. REQUIREMENTS
+  3.1 Each thermal process shall have documented upper and lower control
+      limits, established through process validation appropriate to the
+      specific equipment, material, and product.
+  3.2 Control limits shall be reviewed at intervals not exceeding 5
+      years, or upon any equipment change, material change, or process
+      change, whichever is sooner.
+  3.3 Where a review identifies that the technical basis for an existing
+      limit may no longer be current (e.g., following an equipment
+      change), the responsible Process Engineering function shall
+      determine whether re-validation is warranted and document the
+      determination, per local site change control procedures.
+  3.4 This policy does not itself establish or change any specific
+      numeric limit for any specific process; numeric limits remain
+      the responsibility of local Process Engineering and Quality
+      functions per site-level procedures (e.g., QP-002, QP-004 at
+      Chennai Plant 2).
+
+4. RATIONALE
+Consistent, plant-wide expectations for temperature control governance
+support audit readiness and reduce risk of undocumented or
+unsubstantiated process limits across the organization.
+
+5. APPROVAL
+Corporate Quality Office -- 01-Jan-2016
+
+--- End of CQ-POL-011 ---

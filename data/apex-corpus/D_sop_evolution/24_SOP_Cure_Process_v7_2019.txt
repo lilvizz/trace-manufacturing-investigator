@@ -1,0 +1,40 @@
+[Format spec: 3-page PDF, standard operating procedure template]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+STANDARD OPERATING PROCEDURE
+
+Document No: SOP-CURE-07                    Revision: v7
+Title: Thermal Cure Process -- Press-07               Effective Date: 22-APR-2019
+Owner: Process Engineering                            Page 1 of 3
+
+REVISION HISTORY
+  v6 (2014): See prior revision
+  v7 (2019): Periodic 5-year document review per QP-001 (Document
+             Control Policy). No content changes identified; reissued
+             per policy requirement.
+
+1. PURPOSE
+This procedure defines the standard operating parameters and steps for
+the thermal curing operation on Press-07 (Equipment: PX-400, Asset 7714).
+
+2. PROCESS PARAMETERS
+  Cure zone target temperature: 38.5 deg C
+  Cure zone upper control limit (UCL): 42.3 deg C
+  Cure zone lower control limit (LCL): 36.0 deg C
+  Cure time: 85 sec nominal
+  Cycle pressure: 2.1-2.7 bar
+
+3. OPERATING PROCEDURE
+  (Unchanged from v6 -- see Section 5, prior revision, for full steps.
+  Summary: load part per WI-CURE-07-B, initiate cycle, monitor for
+  alarms, unload and inspect per QC-CHK-04.)
+
+4. ALARM RESPONSE
+  (Unchanged from v6.)
+
+5. APPROVAL
+  Process Engineering: A. Krishnan                  22-Apr-2019
+  Quality: A. Krishnan (dual role at time of review) 22-Apr-2019
+  Production: R. Palanisamy                          24-Apr-2019
+
+--- End of SOP-CURE-07 v7 ---

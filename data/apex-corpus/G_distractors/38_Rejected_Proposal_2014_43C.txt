@@ -1,0 +1,49 @@
+[Format spec: 2-page PDF, change proposal form with rejection memo attached]
+
+APEX THERMAL COMPONENTS -- CHENNAI PLANT 2
+PROCESS CHANGE PROPOSAL
+
+Proposal No: PCP-2014-022                             Date Submitted: 02-MAY-2014
+Proposed by: Dr. R. Padmanabhan, Process Engineer
+Title: Proposed increase of Press-07 cure-zone UCL from 42.3 C to 43.0 C
+
+1. PROPOSAL SUMMARY
+Following characterization data (QUAL-2014-009) showing stable PX-400
+control through at least 44 C, propose raising the production UCL
+modestly to 43.0 C to allow a small cure-time reduction, supporting
+Q3 2014 throughput targets on Line 7.
+
+2. ESTIMATED BENEFIT
+Cure time reduction of approx. 4 sec/cycle -> ~4.5% throughput
+improvement on Press-07.
+
+3. REQUIRED ACTIONS IF APPROVED
+  - Formal ECO raising SOP-CURE-07 and SPC configuration change
+  - Updated first-article inspection run (minimum 3 lots)
+  - Customer notification review (per contract terms for 2 of 5
+    customers on this product line, which reference "process
+    parameters as qualified at time of PPAP" in supply agreements)
+
+--------------------------------------------------------------------
+DISPOSITION: REJECTED (for this cycle)
+Reviewed by: V. Iyer, Sr. Manufacturing Engineer               Date: 22-MAY-2014
+
+Reason for rejection:
+The proposed change would trigger a customer notification/re-approval
+requirement under existing supply agreements for two major accounts
+(see Section 3), with an estimated 6-8 week customer PPAP re-approval
+cycle. Given Q3 targets are only 6 weeks out, the timeline does not
+support pursuing this change for the current throughput initiative.
+Q3 target will instead be met via the fixture/loading sequence
+efficiency gains already implemented (ECO-2014-117) and minor line
+balancing.
+
+This is a scheduling/commercial decision, not a technical rejection of
+the underlying characterization data. Proposal may be revisited for a
+future planning cycle with adequate lead time for customer
+re-approval, should throughput pressure persist.
+
+--------------------------------------------------------------------
+
+4. DISTRIBUTION
+Process Engineering file, Manufacturing Engineering (cc)
