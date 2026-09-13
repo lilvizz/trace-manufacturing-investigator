@@ -1,0 +1,5 @@
+# Additional dependencies needed to run the test suite. Not required
+# to run the backend itself.
+
+-r requirements.txt
+pytest>=9.0.0,<10.0.0

@@ -39,3 +39,6 @@ private_evaluation/
 # Temporary files
 tmp/
 temp/
+
+# Generated retrieval indexes
+data/indexes/

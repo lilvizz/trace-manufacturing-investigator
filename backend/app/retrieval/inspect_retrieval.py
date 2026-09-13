@@ -1,36 +1,41 @@
-from pathlib import Path
+import json
 
+from app.config import INDEX_PATH, PROJECT_ROOT
 from app.retrieval.gemini_embeddings import GeminiEmbeddingProvider
 from app.retrieval.embedding_store import EmbeddingStore
 from app.retrieval.vector_search import VectorSearcher
 
 
-QUESTIONS = {
-    "Q1": "Why is the Press-07 temperature limit 42.3 degrees Celsius?",
-    "Q2": (
-        "Does the original reason for the 42.3 degree limit still apply "
-        "after the PX-200 was replaced by the PX-400?"
-    ),
-    "Q3": "Why was the 42.3 degree limit retained after the 2014 requalification?",
-    "Q4": "What changed over time that affected the justification for the 42.3 degree limit?",
-    "Q5": (
-        "What evidence and approvals would be needed before changing "
-        "the 42.3 degree limit?"
-    ),
-}
+BENCHMARK_QUESTIONS_PATH = (
+    PROJECT_ROOT / "private_evaluation" / "benchmark_questions.json"
+)
+
+
+def load_benchmark_questions() -> dict:
+    """
+    Load the private TRACE benchmark questions.
+
+    These are deliberately kept out of tracked source/dev code (see
+    .gitignore: private_evaluation/) instead of being hardcoded here,
+    so the benchmark question set isn't exposed by the public repo.
+    This script is a manual, local-only retrieval-inspection tool.
+    """
+
+    if not BENCHMARK_QUESTIONS_PATH.exists():
+        raise FileNotFoundError(
+            "Benchmark questions not found at "
+            f"{BENCHMARK_QUESTIONS_PATH}. This file is intentionally "
+            "excluded from the public repository. Restore it from the "
+            "private evaluation materials to run this script."
+        )
+
+    return json.loads(
+        BENCHMARK_QUESTIONS_PATH.read_text(encoding="utf-8")
+    )
 
 
 def build_searcher():
-    project_root = Path(__file__).resolve().parents[3]
-
-    index_path = (
-        project_root
-        / "data"
-        / "indexes"
-        / "apex_embeddings.json"
-    )
-
-    store = EmbeddingStore(index_path)
+    store = EmbeddingStore(INDEX_PATH)
 
     chunks, embeddings = store.load()
 
@@ -45,8 +50,9 @@ def build_searcher():
 
 def main():
     searcher = build_searcher()
+    questions = load_benchmark_questions()
 
-    for question_id, question in QUESTIONS.items():
+    for question_id, question in questions.items():
         print()
         print("=" * 80)
         print(f"{question_id}: {question}")

@@ -10,6 +10,10 @@ class TestEmbeddingProvider(EmbeddingProvider):
     This is NOT used by the real TRACE application.
     """
 
+    # Prevents pytest from mistaking this for a test class to collect,
+    # purely because of the "Test" prefix in its name.
+    __test__ = False
+
     def __init__(self, dimensions: int = 64):
         self.dimensions = dimensions
 
