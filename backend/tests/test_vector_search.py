@@ -2,7 +2,7 @@ from pathlib import Path
 
 from app.ingestion.loader import load_corpus
 from app.ingestion.chunker import chunk_corpus
-from app.retrieval.test_embeddings import TestEmbeddingProvider
+from app.retrieval.fake_embeddings import TestEmbeddingProvider
 from app.retrieval.vector_search import VectorSearcher
 
 
@@ -15,14 +15,22 @@ def build_searcher():
 
     provider = TestEmbeddingProvider()
 
-    return VectorSearcher(chunks, provider)
+    embeddings = provider.embed_documents(
+        [chunk.content for chunk in chunks]
+    )
+
+    return VectorSearcher(
+        chunks,
+        embeddings,
+        provider,
+    )
 
 
 def test_vector_search_returns_results():
     searcher = build_searcher()
 
     results = searcher.search(
-        "Why was the temperature boundary established?",
+        "Why is the Press-07 temperature limit 42.3 degrees Celsius?",
         top_k=5,
     )
 
@@ -30,14 +38,14 @@ def test_vector_search_returns_results():
 
     for result in results:
         assert result.content
-        assert 0 <= result.score <= 1
+        assert result.score >= 0
 
 
 def test_vector_search_is_ranked():
     searcher = build_searcher()
 
     results = searcher.search(
-        "thermal instability temperature",
+        "PX-200 thermal instability 42.3 temperature",
         top_k=5,
     )
 

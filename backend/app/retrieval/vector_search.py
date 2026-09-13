@@ -35,15 +35,22 @@ def cosine_similarity(
 
 
 class VectorSearcher:
-    """Vector similarity search over document chunks."""
+    """Vector similarity search over precomputed embeddings."""
 
-    def __init__(self, chunks, embedding_provider):
+    def __init__(
+        self,
+        chunks,
+        embeddings,
+        embedding_provider,
+    ):
+        if len(chunks) != len(embeddings):
+            raise ValueError(
+                "Number of chunks must match number of embeddings."
+            )
+
         self.chunks = chunks
+        self.embeddings = embeddings
         self.embedding_provider = embedding_provider
-
-        self.embeddings = embedding_provider.embed_documents(
-            [chunk.content for chunk in chunks]
-        )
 
     def search(
         self,
@@ -51,7 +58,9 @@ class VectorSearcher:
         top_k: int = 5,
     ) -> list[VectorSearchResult]:
 
-        query_embedding = self.embedding_provider.embed_query(query)
+        query_embedding = self.embedding_provider.embed_query(
+            query
+        )
 
         scored = []
 
