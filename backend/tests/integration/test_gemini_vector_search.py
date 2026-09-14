@@ -15,6 +15,7 @@ skips cleanly if either is unavailable.
 import os
 
 import pytest
+import json
 
 from app.config import INDEX_PATH
 from app.retrieval.embedding_store import EmbeddingStore
@@ -39,14 +40,31 @@ def build_searcher():
     )
 
 
+def _index_is_compatible() -> bool:
+    if not INDEX_PATH.exists():
+        return False
+
+    try:
+        payload = json.loads(INDEX_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+
+    return (
+        isinstance(payload, dict)
+        and payload.get("schema_version") == 1
+        and isinstance(payload.get("chunks"), list)
+    )
+
+
+@pytest.mark.integration
 @pytest.mark.skipif(
     not GEMINI_API_KEY,
     reason="GEMINI_API_KEY not set; skipping live Gemini integration test.",
 )
 @pytest.mark.skipif(
-    not INDEX_PATH.exists(),
+    not _index_is_compatible(),
     reason=(
-        "Embedding index not found at "
+        "Compatible embedding index not found at "
         f"{INDEX_PATH}; run app/retrieval/indexer.py first."
     ),
 )
