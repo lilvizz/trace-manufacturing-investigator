@@ -21,7 +21,7 @@ class GeminiReasoningClient:
 
     def __init__(
         self,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-3.6-flash",
         max_retries: int = 5,
         base_delay_seconds: float = 1.0,
     ):

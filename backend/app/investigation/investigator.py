@@ -10,14 +10,23 @@ from app.investigation.retriever import InvestigationRetriever
 from app.investigation.timeline import InvestigationTimeline, TimelineBuilder
 
 
+class InvestigationResult:
+    def __init__(
+        self,
+        plan: InvestigationPlan,
+        investigation: Investigation,
+        timeline: InvestigationTimeline,
+        evidence_analysis: EvidenceAnalysis,
+        report: InvestigationReport,
+    ):
+        self.plan = plan
+        self.investigation = investigation
+        self.timeline = timeline
+        self.evidence_analysis = evidence_analysis
+        self.report = report
+
+
 class Investigator:
-    """
-    Orchestrates the complete TRACE investigation workflow.
-
-    Each stage is injected as a dependency so the workflow can be
-    tested without calling external services.
-    """
-
     def __init__(
         self,
         planner: InvestigationPlanner,
@@ -32,9 +41,9 @@ class Investigator:
         self.analyzer = analyzer
         self.reasoner = reasoner
 
-    def run(self, question: str) -> "InvestigationResult":
-        if not question or not question.strip():
-            raise ValueError("Investigation question cannot be empty.")
+    def run(self, question: str) -> InvestigationResult:
+        if not isinstance(question, str) or not question.strip():
+            raise ValueError("question cannot be empty")
 
         question = question.strip()
 
@@ -59,8 +68,10 @@ class Investigator:
         )
 
         report = self.reasoner.reason(
-            investigation,
-        )
+    investigation,
+    evidence_analysis=evidence_analysis,
+    timeline=timeline,
+)
 
         return InvestigationResult(
             plan=plan,
@@ -69,23 +80,3 @@ class Investigator:
             evidence_analysis=evidence_analysis,
             report=report,
         )
-
-
-class InvestigationResult:
-    """
-    Complete output of one TRACE investigation.
-    """
-
-    def __init__(
-        self,
-        plan: InvestigationPlan,
-        investigation: Investigation,
-        timeline: InvestigationTimeline,
-        evidence_analysis: EvidenceAnalysis,
-        report: InvestigationReport,
-    ):
-        self.plan = plan
-        self.investigation = investigation
-        self.timeline = timeline
-        self.evidence_analysis = evidence_analysis
-        self.report = report

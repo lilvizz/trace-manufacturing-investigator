@@ -96,29 +96,27 @@ def test_invalid_citation_is_removed():
 
     client = FakeReasoningClient(response)
 
-    report = InvestigationReasoner(
-        client
-    ).reason(make_investigation())
+    report = InvestigationReasoner(client).reason(
+        make_investigation()
+    )
 
-    assert report.claims[0].evidence_chunk_ids == [
-        "chunk-1"
-    ]
+    assert report.claims[0].evidence_chunk_ids == ["chunk-1"]
 
 
-def test_confidence_is_clamped():
+def test_confidence_is_clamped_when_citation_is_valid():
     response = json.dumps(
         {
             "claims": [
                 {
                     "statement": "Claim.",
-                    "stance": "unknown",
-                    "evidence_chunk_ids": [],
+                    "stance": "supports",
+                    "evidence_chunk_ids": ["chunk-1"],
                     "confidence": 4.5,
                 },
                 {
                     "statement": "Claim 2.",
-                    "stance": "unknown",
-                    "evidence_chunk_ids": [],
+                    "stance": "supports",
+                    "evidence_chunk_ids": ["chunk-2"],
                     "confidence": -2,
                 },
             ]
@@ -127,12 +125,38 @@ def test_confidence_is_clamped():
 
     client = FakeReasoningClient(response)
 
-    report = InvestigationReasoner(
-        client
-    ).reason(make_investigation())
+    report = InvestigationReasoner(client).reason(
+        make_investigation()
+    )
 
     assert report.claims[0].confidence == 1.0
     assert report.claims[1].confidence == 0.0
+
+
+def test_claim_without_valid_citation_becomes_unknown():
+    response = json.dumps(
+        {
+            "claims": [
+                {
+                    "statement": "Unsupported factual claim.",
+                    "stance": "supports",
+                    "evidence_chunk_ids": ["DOES-NOT-EXIST"],
+                    "confidence": 0.9,
+                }
+            ]
+        }
+    )
+
+    client = FakeReasoningClient(response)
+
+    report = InvestigationReasoner(client).reason(
+        make_investigation()
+    )
+
+    assert len(report.claims) == 1
+    assert report.claims[0].stance == EvidenceStance.UNKNOWN
+    assert report.claims[0].evidence_chunk_ids == []
+    assert report.claims[0].confidence == 0.0
 
 
 def test_unresolved_questions_are_preserved():
@@ -147,9 +171,9 @@ def test_unresolved_questions_are_preserved():
 
     client = FakeReasoningClient(response)
 
-    report = InvestigationReasoner(
-        client
-    ).reason(make_investigation())
+    report = InvestigationReasoner(client).reason(
+        make_investigation()
+    )
 
     assert report.unresolved_questions == [
         "Is the current limit still technically justified?"
@@ -157,14 +181,12 @@ def test_unresolved_questions_are_preserved():
 
 
 def test_invalid_json_raises():
-    client = FakeReasoningClient(
-        "This is not JSON."
-    )
+    client = FakeReasoningClient("This is not JSON.")
 
     with pytest.raises(ValueError, match="invalid JSON"):
-        InvestigationReasoner(
-            client
-        ).reason(make_investigation())
+        InvestigationReasoner(client).reason(
+            make_investigation()
+        )
 
 
 def test_prompt_contains_evidence_and_rules():
@@ -177,9 +199,9 @@ def test_prompt_contains_evidence_and_rules():
         )
     )
 
-    InvestigationReasoner(
-        client
-    ).reason(make_investigation())
+    InvestigationReasoner(client).reason(
+        make_investigation()
+    )
 
     prompt = client.prompts[0]
 
@@ -188,3 +210,50 @@ def test_prompt_contains_evidence_and_rules():
     assert "chunk-2" in prompt
     assert "Do not invent facts" in prompt
     assert "administrative persistence" in prompt
+
+
+def test_prompt_distinguishes_persistence_from_reaffirmation():
+    client = FakeReasoningClient(
+        json.dumps(
+            {
+                "claims": [
+                    {
+                        "statement": "The limit remained unchanged.",
+                        "stance": "supports",
+                        "evidence_chunk_ids": ["chunk-1"],
+                        "confidence": 0.9,
+                    }
+                ],
+                "unresolved_questions": [],
+            }
+        )
+    )
+
+    reasoner = InvestigationReasoner(client=client)
+
+    investigation = Investigation(
+        question="Why is the limit 42.3°C?",
+        subquestions=["What changed later?"],
+        evidence=[
+            EvidenceItem(
+                chunk_id="chunk-1",
+                document_id="doc-1",
+                filename="review.txt",
+                relative_path="review.txt",
+                content=(
+                    "The 42.3°C limit remained unchanged during "
+                    "the review. No technical reaffirmation was recorded."
+                ),
+                retrieval_score=1.0,
+                retrieved_for=["What changed later?"],
+            )
+        ],
+    )
+
+    reasoner.reason(investigation)
+
+    prompt = client.prompts[0]
+
+    assert "Do not infer reaffirmation from mere persistence" in prompt
+    assert "administratively retained" in prompt
+    assert "carried forward unchanged" in prompt
