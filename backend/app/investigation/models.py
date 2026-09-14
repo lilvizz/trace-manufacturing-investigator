@@ -3,8 +3,6 @@ from enum import Enum
 
 
 class EvidenceStance(str, Enum):
-    """How evidence relates to the investigation."""
-
     UNKNOWN = "unknown"
     SUPPORTS = "supports"
     CONTRADICTS = "contradicts"
@@ -13,47 +11,45 @@ class EvidenceStance(str, Enum):
 
 @dataclass
 class EvidenceItem:
-    """A piece of evidence gathered during an investigation."""
-
     chunk_id: str
     document_id: str
     filename: str
     relative_path: str
     content: str
     retrieval_score: float
-    retrieved_for: str
+    retrieved_for: list[str] = field(default_factory=list)
     stance: EvidenceStance = EvidenceStance.UNKNOWN
 
 
 @dataclass
 class Investigation:
-    """
-    State accumulated during a TRACE investigation.
-
-    An investigation is deliberately mutable: each retrieval stage
-    can add evidence to the same investigation.
-    """
-
     question: str
     subquestions: list[str] = field(default_factory=list)
     evidence: list[EvidenceItem] = field(default_factory=list)
 
     def add_evidence(self, item: EvidenceItem) -> None:
-        """Add evidence unless the same chunk is already present."""
+        existing = next(
+            (
+                evidence
+                for evidence in self.evidence
+                if evidence.chunk_id == item.chunk_id
+            ),
+            None,
+        )
 
-        if any(
-            existing.chunk_id == item.chunk_id
-            for existing in self.evidence
-        ):
+        if existing is None:
+            self.evidence.append(item)
             return
 
-        self.evidence.append(item)
+        for subquestion in item.retrieved_for:
+            if subquestion not in existing.retrieved_for:
+                existing.retrieved_for.append(subquestion)
 
-    def add_evidence_many(
-        self,
-        items: list[EvidenceItem],
-    ) -> None:
-        """Add multiple evidence items while preventing duplicates."""
+        existing.retrieval_score = max(
+            existing.retrieval_score,
+            item.retrieval_score,
+        )
 
+    def add_evidence_many(self, items: list[EvidenceItem]) -> None:
         for item in items:
             self.add_evidence(item)
