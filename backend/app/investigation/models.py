@@ -53,3 +53,39 @@ class Investigation:
     def add_evidence_many(self, items: list[EvidenceItem]) -> None:
         for item in items:
             self.add_evidence(item)
+
+
+class FindingType(str, Enum):
+    SUPPORTED = "supported"
+    CONTRADICTION = "contradiction"
+    EVIDENCE_GAP = "evidence-gap"
+    CONTEXT = "context"
+
+
+@dataclass
+class EvidenceFinding:
+    finding_type: FindingType
+    statement: str
+    evidence_chunk_ids: list[str] = field(default_factory=list)
+
+
+@dataclass
+class EvidenceAnalysis:
+    findings: list[EvidenceFinding] = field(default_factory=list)
+
+    def add_finding(self, finding: EvidenceFinding) -> None:
+        self.findings.append(finding)
+        
+@dataclass
+class ReasoningClaim:
+    statement: str
+    stance: EvidenceStance
+    evidence_chunk_ids: list[str] = field(default_factory=list)
+    confidence: float = 0.0
+
+
+@dataclass
+class InvestigationReport:
+    question: str
+    claims: list[ReasoningClaim] = field(default_factory=list)
+    unresolved_questions: list[str] = field(default_factory=list)
