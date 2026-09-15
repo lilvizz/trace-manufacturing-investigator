@@ -3,7 +3,9 @@ from pathlib import Path
 from app.ingestion.chunker import chunk_corpus
 from app.ingestion.loader import load_corpus
 from app.investigation.build import build_investigator
-from app.retrieval.search import CorpusSearcher
+from app.retrieval.bm25_search import BM25Searcher
+from app.retrieval.entity_matcher import EntityMatcher
+from app.retrieval.hybrid_retriever import HybridRetriever
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -23,13 +25,26 @@ def main():
     print(f"Documents loaded: {len(documents)}")
     print(f"Chunks created:   {len(chunks)}")
 
-    # Local TF-IDF retrieval baseline.
-    # This avoids spending Gemini embedding quota while we test
-    # the investigation workflow itself.
-    corpus_searcher = CorpusSearcher(chunks)
+    # Hybrid local retrieval.
+    #
+    # BM25 provides strong lexical matching for manufacturing
+    # identifiers, terminology, and exact values.
+    # Entity matching provides an additional deterministic
+    # retrieval signal for important technical identifiers.
+    #
+    # Vector retrieval will be added once the embedding index
+    # is regenerated against the current chunking configuration.
+    bm25_searcher = BM25Searcher(chunks)
+    entity_matcher = EntityMatcher(chunks)
+
+    hybrid_retriever = HybridRetriever(
+        bm25_searcher=bm25_searcher,
+        vector_searcher=None,
+        entity_matcher=entity_matcher,
+    )
 
     investigator = build_investigator(
-        retriever=corpus_searcher,
+        retriever=hybrid_retriever,
     )
 
     question = "Why is this limit 42.3°C?"
@@ -61,7 +76,10 @@ def main():
             f"score={evidence.retrieval_score:.4f}"
         )
         print(f"File: {evidence.filename}")
-        print(f"Retrieved for: {len(evidence.retrieved_for)} subquestion(s)")
+        print(
+            f"Retrieved for: "
+            f"{len(evidence.retrieved_for)} subquestion(s)"
+        )
 
     print("\n" + "=" * 70)
     print("TIMELINE")
@@ -84,7 +102,8 @@ def main():
 
         if finding.evidence_chunk_ids:
             print(
-                f"Evidence: {', '.join(finding.evidence_chunk_ids)}"
+                f"Evidence: "
+                f"{', '.join(finding.evidence_chunk_ids)}"
             )
 
     print("\n" + "=" * 70)

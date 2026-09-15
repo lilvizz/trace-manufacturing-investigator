@@ -16,6 +16,9 @@ def build_investigator(
     Gemini is used for:
       - investigation planning
       - final evidence-based reasoning
+
+    The supplied retriever is expected to be the production
+    HybridRetriever (BM25 + vector + entity matching + RRF).
     """
 
     gemini_client = GeminiReasoningClient()
@@ -26,8 +29,10 @@ def build_investigator(
 
     investigator_retriever = InvestigationRetriever(
         retriever=retriever,
-        top_k_per_subquestion=5,
+        top_k_per_subquestion=8,
         max_evidence=30,
+        max_per_document=4,
+        max_per_subquestion_document=2,
     )
 
     timeline_builder = TimelineBuilder()

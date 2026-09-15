@@ -7,6 +7,16 @@ class EvidenceStance(str, Enum):
     SUPPORTS = "supports"
     CONTRADICTS = "contradicts"
     CONTEXT_ONLY = "context-only"
+    NOT_ESTABLISHED = "not_established"
+
+
+class ClaimType(str, Enum):
+    ORIGINAL_BASIS = "original_basis"
+    CURRENT_CAPABILITY = "current_capability"
+    ADMINISTRATIVE_ACTION = "administrative_action"
+    CURRENT_TECHNICAL_JUSTIFICATION = "current_technical_justification"
+    EVIDENCE_GAP = "evidence_gap"
+    RECOMMENDATION = "recommendation"
 
 
 @dataclass
@@ -75,13 +85,15 @@ class EvidenceAnalysis:
 
     def add_finding(self, finding: EvidenceFinding) -> None:
         self.findings.append(finding)
-        
+
+
 @dataclass
 class ReasoningClaim:
     statement: str
     stance: EvidenceStance
     evidence_chunk_ids: list[str] = field(default_factory=list)
     confidence: float = 0.0
+    claim_type: ClaimType | None = None
 
 
 @dataclass

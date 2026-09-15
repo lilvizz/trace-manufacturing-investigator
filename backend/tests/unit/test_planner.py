@@ -57,7 +57,7 @@ def test_gemini_planner_uses_generated_subquestions():
 
     plan = planner.create_plan("Why is this limit 42.3°C?")
 
-    assert len(plan.subquestions) == 5
+    assert len(plan.subquestions) == 7
     assert plan.subquestions[0] == "Where did the limit originate?"
     assert len(client.prompts) == 1
 
@@ -214,3 +214,37 @@ def test_no_gemini_client_uses_deterministic_planner():
         "originally established" in question
         for question in plan.subquestions
     )
+
+
+def test_gemini_planner_adds_required_investigation_anchors():
+    response = json.dumps(
+        {
+            "subquestions": [
+                "Where did the limit originate?",
+                "What technical evidence justified the original limit?",
+                "What changed after the equipment was replaced?",
+                "Was the limit later reviewed or changed?",
+                "What evidence supports the limit today?",
+                "What evidence is missing?",
+            ]
+        }
+    )
+
+    client = FakePlanningClient(response)
+    planner = InvestigationPlanner(planning_client=client)
+
+    plan = planner.create_plan("Why is this limit 42.3°C?")
+
+    assert (
+        "Was a proposal to change this parameter ever submitted, "
+        "and if so, what was the stated reason for its approval "
+        "or rejection?"
+    ) in plan.subquestions
+
+    assert (
+        "Did the equipment-qualification or requalification "
+        "documentation explicitly state what it does and does "
+        "not establish about the current operating limit?"
+    ) in plan.subquestions
+
+    assert len(plan.subquestions) == 8

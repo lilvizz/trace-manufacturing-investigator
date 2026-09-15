@@ -51,7 +51,7 @@ class InvestigationPlanner:
         if not plan.subquestions:
             raise ValueError("Gemini returned an empty investigation plan")
 
-        return plan
+        return self._add_required_anchors(plan, question)
 
     def _build_prompt(self, question: str) -> str:
         return f"""
@@ -149,6 +149,70 @@ Return ONLY valid JSON in this exact structure:
 
         return InvestigationPlan(
             question=question,
+            subquestions=subquestions,
+        )
+
+    def _add_required_anchors(
+        self,
+        plan: InvestigationPlan,
+        question: str,
+    ) -> InvestigationPlan:
+        """
+        Add deterministic investigation anchors only for questions
+        that concern the origin, justification, persistence, or
+        current applicability of a condition or parameter.
+
+        Generic planning questions remain unchanged so that the
+        planner's normal parsing and deduplication behavior is
+        preserved.
+        """
+
+        question_lower = question.lower()
+
+        anchor_terms = [
+            "why",
+            "limit",
+            "threshold",
+            "parameter",
+            "setting",
+            "value",
+            "rationale",
+            "justification",
+            "retained",
+            "remain",
+            "reaffirm",
+            "established",
+            "origin",
+            "current",
+        ]
+
+        if not any(
+            term in question_lower
+            for term in anchor_terms
+        ):
+            return plan
+
+        required_anchors = [
+            (
+                "Was a proposal to change this parameter ever submitted, "
+                "and if so, what was the stated reason for its approval "
+                "or rejection?"
+            ),
+            (
+                "Did the equipment-qualification or requalification "
+                "documentation explicitly state what it does and does "
+                "not establish about the current operating limit?"
+            ),
+        ]
+
+        subquestions = list(plan.subquestions)
+
+        for anchor in required_anchors:
+            if anchor not in subquestions:
+                subquestions.append(anchor)
+
+        return InvestigationPlan(
+            question=plan.question,
             subquestions=subquestions,
         )
 

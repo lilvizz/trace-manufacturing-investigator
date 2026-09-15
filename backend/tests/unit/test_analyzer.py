@@ -44,8 +44,14 @@ def test_all_subquestions_have_evidence():
             "What changed later?",
         ],
         evidence=[
-            evidence("chunk-1", "What established the limit?"),
-            evidence("chunk-2", "What changed later?"),
+            evidence(
+                "chunk-1",
+                "What established the limit?",
+            ),
+            evidence(
+                "chunk-2",
+                "What changed later?",
+            ),
         ],
     )
 
@@ -68,18 +74,26 @@ def test_missing_subquestion_creates_gap():
             "What changed later?",
         ],
         evidence=[
-            evidence("chunk-1", "What established the limit?"),
+            evidence(
+                "chunk-1",
+                "What established the limit?",
+            ),
         ],
     )
 
     analysis = EvidenceGapAnalyzer().analyze(investigation)
 
-    assert len(analysis.findings) == 1
-    assert analysis.findings[0].finding_type == FindingType.EVIDENCE_GAP
-    assert "What changed later?" in analysis.findings[0].statement
+    gaps = [
+        finding
+        for finding in analysis.findings
+        if finding.finding_type == FindingType.EVIDENCE_GAP
+    ]
+
+    assert len(gaps) == 1
+    assert "What changed later?" in gaps[0].statement
 
 
-def test_supporting_evidence_is_recorded():
+def test_stance_is_not_used_as_ground_truth():
     investigation = Investigation(
         question="Why is the limit 42.3°C?",
         subquestions=["What established the limit?"],
@@ -94,17 +108,15 @@ def test_supporting_evidence_is_recorded():
 
     analysis = EvidenceGapAnalyzer().analyze(investigation)
 
-    supported = [
-        finding
+    # The analyzer must not blindly convert Gemini/populated stance
+    # into a finding. Stance is handled later by the reasoning layer.
+    assert all(
+        finding.finding_type != FindingType.SUPPORTED
         for finding in analysis.findings
-        if finding.finding_type == FindingType.SUPPORTED
-    ]
-
-    assert len(supported) == 1
-    assert supported[0].evidence_chunk_ids == ["chunk-1"]
+    )
 
 
-def test_contradicting_evidence_is_recorded():
+def test_contradiction_is_not_inferred_from_stance():
     investigation = Investigation(
         question="Why is the limit 42.3°C?",
         subquestions=["What changed later?"],
@@ -119,17 +131,13 @@ def test_contradicting_evidence_is_recorded():
 
     analysis = EvidenceGapAnalyzer().analyze(investigation)
 
-    contradictions = [
-        finding
+    assert all(
+        finding.finding_type != FindingType.CONTRADICTION
         for finding in analysis.findings
-        if finding.finding_type == FindingType.CONTRADICTION
-    ]
-
-    assert len(contradictions) == 1
-    assert contradictions[0].evidence_chunk_ids == ["chunk-1"]
+    )
 
 
-def test_context_evidence_is_recorded():
+def test_context_is_not_inferred_from_stance():
     investigation = Investigation(
         question="Why is the limit 42.3°C?",
         subquestions=["What established the limit?"],
@@ -144,10 +152,7 @@ def test_context_evidence_is_recorded():
 
     analysis = EvidenceGapAnalyzer().analyze(investigation)
 
-    context = [
-        finding
+    assert all(
+        finding.finding_type != FindingType.CONTEXT
         for finding in analysis.findings
-        if finding.finding_type == FindingType.CONTEXT
-    ]
-
-    assert len(context) == 1
+    )

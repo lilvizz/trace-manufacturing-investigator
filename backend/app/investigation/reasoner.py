@@ -2,6 +2,7 @@ import json
 from typing import Protocol
 
 from app.investigation.models import (
+    ClaimType,
     EvidenceAnalysis,
     EvidenceStance,
     Investigation,
@@ -20,7 +21,12 @@ class InvestigationReasoner:
     """
     Converts retrieved evidence into evidence-backed claims.
 
-    The model is explicitly constrained to cite retrieved chunk IDs.
+    The model is explicitly constrained to:
+    - cite retrieved chunk IDs
+    - distinguish historical technical evidence from current justification
+    - distinguish administrative persistence from technical validation
+    - identify evidence gaps explicitly
+    - avoid unsupported engineering conclusions
     """
 
     def __init__(self, client: ReasoningClient):
@@ -60,6 +66,7 @@ class InvestigationReasoner:
         structured_analysis = self._format_evidence_analysis(
             evidence_analysis
         )
+
         timeline_text = self._format_timeline(timeline)
 
         prompt = f"""
@@ -87,58 +94,247 @@ RETRIEVED EVIDENCE:
 IMPORTANT REASONING RULES:
 
 1. Use only the supplied evidence.
-2. Do not invent facts, dates, causes, decisions, or missing records.
+
+2. Do not invent facts, dates, causes, decisions, calculations,
+   approvals, validations, or missing records.
+
 3. Every factual claim MUST cite one or more supplied evidence chunk IDs.
-4. If evidence is insufficient, use "unknown" rather than guessing.
-5. Distinguish supports, contradicts, context-only, and unknown.
+
+4. If evidence is insufficient, explicitly represent the claim as
+   "not_established" or "unknown" rather than guessing.
+
+5. Distinguish:
+   - supports
+   - contradicts
+   - context-only
+   - unknown
+   - not_established
+
 6. Do NOT treat administrative persistence as technical justification.
-7. The fact that a value remained unchanged does NOT prove it was technically reaffirmed.
-8. Do not infer reaffirmation from mere persistence.
-   Do not infer reaffirmation from repeated appearance in SOPs, SPC
-   configuration, QMS records, or operating data alone.
-9. Only say "reaffirmed", "validated", "confirmed", or "re-approved"
-   when the evidence explicitly documents that action.
+
+7. The fact that a value remained unchanged does NOT prove it was
+   technically reaffirmed.
+
+8. Do not infer technical reaffirmation from mere persistence.
+
+   Repeated appearance in:
+   - SOPs
+   - SPC configuration
+   - QMS records
+   - operating data
+   - current configuration records
+
+   is NOT sufficient by itself to establish technical revalidation
+   or technical reaffirmation.
+   
+   - Do not infer reaffirmation from mere persistence.
+
+9. Only say:
+   - reaffirmed
+   - validated
+   - confirmed
+   - re-approved
+   - technically re-justified
+   - technically re-established
+
+   when the evidence explicitly documents the relevant action or
+   conclusion.
+
 10. Distinguish between:
+
+    - original technical basis
+    - current equipment/process capability
     - technically justified
     - technically reviewed
+    - technically revalidated
     - administratively retained
     - carried forward unchanged
     - observed in operation
+    - evidence gap
+    - not established
     - unknown
+
 11. Process or quality stability data without an explicit technical
-    conclusion does NOT establish technical justification.
-12. Absence of evidence does not prove that something never happened.
-    Say "not established in the available evidence" when appropriate.
-13. Never strengthen the wording of source evidence.
-14. When evidence conflicts, explicitly identify the contradiction.
-15. If a historical technical reason existed but the equipment/process
-    later changed, investigate whether the original reason still applies.
-16. For the 42.3°C question specifically, distinguish:
-    a) why the value was originally created,
-    b) why it remained administratively in place,
-    c) whether its technical justification was re-established after
-       the equipment change.
-17. Do not recommend changing a production control limit merely because
+    conclusion does NOT establish technical justification of a
+    production control limit.
+
+12. Qualification or requalification of equipment does NOT automatically
+    mean that an existing production limit was revalidated.
+
+13. Demonstrated stability above an existing limit does NOT automatically
+    establish a new approved production limit.
+
+14. Absence of evidence does not prove that something never happened.
+
+    Use wording such as:
+    "not established in the available evidence"
+
+    when the available evidence does not establish the claim.
+
+15. Never strengthen the wording of source evidence.
+
+16. When evidence conflicts, explicitly identify the contradiction
+    and explain whether it may instead reflect:
+    - different equipment
+    - different product
+    - different time period
+    - different process scope
+    - different document purpose
+
+17. If a historical technical reason existed but the equipment/process
+    later changed, investigate whether the original reason was
+    technically re-established for the changed equipment.
+
+18. For any claim about CURRENT technical justification of an existing
+    parameter or limit:
+
+    Use claim_type:
+        "current_technical_justification"
+
+    and stance:
+        "not_established"
+
+    UNLESS the cited evidence explicitly establishes that the exact
+    current parameter/limit was technically reviewed, tested,
+    revalidated, re-approved, or otherwise technically re-established
+    for the current equipment/process.
+
+    The following are NOT sufficient by themselves:
+    - broader equipment capability
+    - stable operation above the limit
+    - unchanged SOP/SPC references
+    - continued use of the old value
+    - administrative retention
+    - absence of a later rejection
+    - a generic equipment qualification
+
+19. For the specific 42.3°C investigation, explicitly distinguish:
+
+    a) why 42.3°C was originally created,
+    b) what happened to the equipment/process afterward,
+    c) what later evidence establishes about PX-400 capability,
+    d) why 42.3°C remained administratively in place,
+    e) whether technical justification for the exact 42.3°C limit
+       was re-established after the equipment change.
+
+20. If an administrative/commercial proposal was rejected or deferred,
+    do NOT characterize that as a technical rejection unless the
+    evidence explicitly states a technical reason.
+
+21. If a proposed change was rejected for commercial, scheduling,
+    customer-approval, PPAP, or administrative reasons, represent that
+    as an administrative_action claim.
+
+22. Do not recommend changing a production control limit merely because
     later evidence suggests the original failure mechanism may no longer
-    apply. Identify what further engineering validation is required.
+    apply.
+
+    If the evidence suggests a possible change may deserve investigation,
+    identify the required engineering validation/change-control process
+    instead of asserting a new safe limit.
+
+23. A recommendation is NOT a technical fact.
+
+    Recommendations must be represented with:
+        claim_type = "recommendation"
+
+    and must clearly distinguish what the evidence establishes from
+    what should be investigated or validated next.
+
+24. Evidence gaps are first-class findings.
+
+    When the evidence establishes the original basis and later equipment
+    capability but does not establish current technical re-justification,
+    explicitly produce an evidence_gap or
+    current_technical_justification claim with:
+        stance = "not_established"
+
+25. Do not use "supports" merely because a cited document is related
+    to the topic.
+
+    The cited evidence must actually support the specific claim being made.
+
+26. Preserve uncertainty.
+
+    If evidence is incomplete, conflicting, indirect, informal, or
+    limited in scope, reduce the strength of the claim rather than
+    converting uncertainty into certainty.
+
+27. Claim type definitions:
+
+    "original_basis"
+        The historical technical reason or evidence that originally
+        established a parameter/limit.
+
+    "current_capability"
+        What later testing, qualification, operation, or evidence shows
+        the current equipment/process can do. This does NOT automatically
+        establish an approved production limit.
+
+    "administrative_action"
+        Approval, rejection, deferral, scheduling, customer, PPAP,
+        procedural, or other administrative decisions.
+
+    "current_technical_justification"
+        Whether the exact current production parameter/limit is
+        technically justified for the current equipment/process.
+
+    "evidence_gap"
+        A material piece of evidence needed to establish an important
+        conclusion is not established in the available evidence.
+
+    "recommendation"
+        A proposed next action, validation, review, or change-control
+        step. Recommendations must not be presented as established facts.
+
+28. For current_technical_justification claims, do not infer a positive
+    technical justification from the absence of contradictory evidence.
+
+29. A claim may cite several documents, but multiple citations do not
+    automatically make a claim stronger. Evidence must independently
+    support the specific claim.
+
+30. If the evidence establishes that a historical technical justification
+    existed but does not establish that it was re-established for the
+    current equipment, state BOTH facts.
+
+    Do not collapse them into a single "supported" conclusion.
 
 Every claim must use wording no stronger than the evidence supports.
-When multiple pieces of evidence differ in strength, preserve the
-uncertainty rather than choosing the stronger interpretation.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON.
+
+The JSON schema is:
 
 {{
   "claims": [
     {{
       "statement": "...",
-      "stance": "supports|contradicts|unknown|context-only",
+      "claim_type": "original_basis|current_capability|administrative_action|current_technical_justification|evidence_gap|recommendation",
+      "stance": "supports|contradicts|unknown|context-only|not_established",
       "evidence_chunk_ids": ["..."],
       "confidence": 0.0
     }}
   ],
   "unresolved_questions": ["..."]
 }}
+
+Additional output requirements:
+
+- claim_type MUST be one of the allowed values above.
+- stance MUST be one of the allowed values above.
+- evidence_chunk_ids MUST contain only supplied evidence chunk IDs.
+- Do not invent chunk IDs.
+- Every factual claim should have at least one evidence_chunk_id.
+- If no valid evidence supports a factual claim, use:
+      stance = "not_established"
+      evidence_chunk_ids = []
+      confidence = 0.0
+- For current_technical_justification claims, use
+  stance = "not_established" unless explicit technical
+  re-justification evidence exists.
+- Confidence must reflect the strength of the evidence, not simply
+  confidence in your own generated answer.
 """
         return prompt.strip()
 
@@ -245,13 +441,22 @@ Return ONLY valid JSON:
         claims = []
 
         for raw_claim in payload.get("claims", []):
+            if not isinstance(raw_claim, dict):
+                continue
+
+            raw_citations = raw_claim.get(
+                "evidence_chunk_ids",
+                [],
+            )
+
+            if not isinstance(raw_citations, list):
+                raw_citations = []
+
             cited_ids = [
                 chunk_id
-                for chunk_id in raw_claim.get(
-                    "evidence_chunk_ids",
-                    [],
-                )
-                if chunk_id in evidence_ids
+                for chunk_id in raw_citations
+                if isinstance(chunk_id, str)
+                and chunk_id in evidence_ids
             ]
 
             raw_stance = raw_claim.get(
@@ -264,11 +469,27 @@ Return ONLY valid JSON:
             except ValueError:
                 stance = EvidenceStance.UNKNOWN
 
-            confidence = float(
-                raw_claim.get("confidence", 0.0)
-            )
+            raw_claim_type = raw_claim.get("claim_type")
 
-            confidence = max(0.0, min(1.0, confidence))
+            claim_type = None
+
+            if raw_claim_type is not None:
+                try:
+                    claim_type = ClaimType(raw_claim_type)
+                except ValueError:
+                    claim_type = None
+
+            try:
+                confidence = float(
+                    raw_claim.get("confidence", 0.0)
+                )
+            except (TypeError, ValueError):
+                confidence = 0.0
+
+            confidence = max(
+                0.0,
+                min(1.0, confidence),
+            )
 
             statement = str(
                 raw_claim.get("statement", "")
@@ -284,6 +505,7 @@ Return ONLY valid JSON:
                         stance=EvidenceStance.UNKNOWN,
                         evidence_chunk_ids=[],
                         confidence=0.0,
+                        claim_type=claim_type,
                     )
                 )
                 continue
@@ -294,15 +516,22 @@ Return ONLY valid JSON:
                     stance=stance,
                     evidence_chunk_ids=cited_ids,
                     confidence=confidence,
+                    claim_type=claim_type,
                 )
             )
 
+        raw_unresolved = payload.get(
+            "unresolved_questions",
+            [],
+        )
+
+        if not isinstance(raw_unresolved, list):
+            raw_unresolved = []
+
         unresolved = [
-            str(question)
-            for question in payload.get(
-                "unresolved_questions",
-                [],
-            )
+            str(question).strip()
+            for question in raw_unresolved
+            if str(question).strip()
         ]
 
         return claims, unresolved
