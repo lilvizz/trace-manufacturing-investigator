@@ -9,19 +9,18 @@ from app.investigation.timeline import TimelineBuilder
 
 def build_investigator(
     retriever,
+    gemini_client=None,
 ) -> Investigator:
     """
     Build the production TRACE investigation pipeline.
 
-    Gemini is used for:
-      - investigation planning
-      - final evidence-based reasoning
-
-    The supplied retriever is expected to be the production
-    HybridRetriever (BM25 + vector + entity matching + RRF).
+    gemini_client is optional so the UI can supply a client with
+    tighter retry behavior. Existing callers that omit it retain
+    the original backend behavior.
     """
 
-    gemini_client = GeminiReasoningClient()
+    if gemini_client is None:
+        gemini_client = GeminiReasoningClient()
 
     planner = InvestigationPlanner(
         planning_client=gemini_client,
@@ -36,12 +35,8 @@ def build_investigator(
     )
 
     timeline_builder = TimelineBuilder()
-
     analyzer = EvidenceGapAnalyzer()
-
-    reasoner = InvestigationReasoner(
-        client=gemini_client,
-    )
+    reasoner = InvestigationReasoner(client=gemini_client)
 
     return Investigator(
         planner=planner,

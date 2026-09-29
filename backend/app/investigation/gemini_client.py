@@ -13,10 +13,11 @@ RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
 class GeminiReasoningClient:
     """
-    Thin adapter around Gemini for investigation reasoning.
+    Thin adapter around Gemini for investigation planning/reasoning.
 
-    The investigation layer owns the prompt and response validation.
-    This class only handles Gemini API communication.
+    max_retries controls TRACE's adapter-level retries.
+    The Google GenAI HTTP client is also configured explicitly so
+    transient API errors do not silently trigger its default 5 attempts.
     """
 
     def __init__(
@@ -32,7 +33,21 @@ class GeminiReasoningClient:
                 "GEMINI_API_KEY environment variable is not set."
             )
 
-        self.client = genai.Client(api_key=api_key)
+        # The SDK defaults to 5 HTTP attempts. Make this explicit so the
+        # caller can choose fast-fail behavior for the UI.
+        sdk_attempts = max(1, max_retries + 1)
+
+        self.client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(
+                retry_options=types.HttpRetryOptions(
+                    attempts=sdk_attempts,
+                    initial_delay=max(0.0, base_delay_seconds),
+                    max_delay=max(0.0, base_delay_seconds),
+                    jitter=0.0,
+                )
+            ),
+        )
         self.model = model
         self.max_retries = max_retries
         self.base_delay_seconds = base_delay_seconds
