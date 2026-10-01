@@ -17,7 +17,9 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+import textwrap
 import streamlit as st
+import streamlit.components.v1 as components
 
 # Allow `streamlit run app/ui.py` from the backend directory.
 APP_DIR = Path(__file__).resolve().parent
@@ -256,6 +258,43 @@ def inject_css() -> None:
             padding: 20px;
             margin-bottom: 12px;
         }
+
+        .direct-answer-card {
+            background:
+                linear-gradient(145deg, #121c27, #0d141c);
+            border: 1px solid rgba(105, 214, 231, .28);
+            border-left: 3px solid var(--trace-cyan);
+            border-radius: 14px;
+            padding: 22px 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .16);
+        }
+
+        .direct-answer-label {
+            color: var(--trace-cyan);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .direct-answer-text {
+            color: var(--trace-text);
+            font-size: 18px;
+            line-height: 1.65;
+            font-weight: 500;
+        }
+
+        .direct-answer-evidence {
+            color: var(--trace-muted);
+            font-size: 11px;
+            line-height: 1.5;
+            margin-top: 14px;
+            padding-top: 11px;
+            border-top: 1px solid var(--trace-border);
+        }
+
 
         .result-card.compact {
             padding: 15px 17px;
@@ -531,6 +570,108 @@ def inject_css() -> None:
             margin-top: 5px;
         }
 
+        .landing-shell {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #243242;
+            border-radius: 18px;
+            padding: 30px 32px 26px;
+            margin-top: 8px;
+            background:
+                radial-gradient(circle at 84% 12%, rgba(105,214,231,.10), transparent 18rem),
+                radial-gradient(circle at 15% 100%, rgba(93,169,255,.08), transparent 22rem),
+                linear-gradient(145deg, #0f1821 0%, #0a1017 68%);
+        }
+
+        .landing-shell:after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: .22;
+            background-image:
+                linear-gradient(rgba(105,214,231,.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(105,214,231,.055) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: linear-gradient(90deg, black, transparent 82%);
+        }
+
+        .landing-kicker {
+            position: relative;
+            z-index: 1;
+            color: var(--trace-cyan);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .18em;
+            text-transform: uppercase;
+        }
+
+        .landing-title {
+            position: relative;
+            z-index: 1;
+            max-width: 760px;
+            color: #f3f7fa;
+            font-size: clamp(30px, 3.3vw, 48px);
+            line-height: 1.04;
+            font-weight: 760;
+            letter-spacing: -.04em;
+            margin-top: 9px;
+        }
+
+        .landing-copy {
+            position: relative;
+            z-index: 1;
+            max-width: 760px;
+            color: #9ba8b6;
+            font-size: 14px;
+            line-height: 1.65;
+            margin-top: 13px;
+        }
+
+        .landing-proof-row {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .landing-proof {
+            border: 1px solid #273746;
+            background: rgba(5,10,15,.55);
+            border-radius: 7px;
+            padding: 6px 9px;
+            color: #aab7c4;
+            font-size: 9px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .landing-proof strong {
+            color: #e1e8ee;
+            font-weight: 760;
+        }
+
+        .case-intro {
+            margin: 22px 0 11px;
+        }
+
+        .case-intro-title {
+            color: #dbe4ec;
+            font-size: 12px;
+            font-weight: 760;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+        }
+
+        .case-intro-copy {
+            color: #778594;
+            font-size: 11px;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
         .empty-state {
             border: 1px dashed #2a3643;
             border-radius: 14px;
@@ -604,6 +745,64 @@ def inject_css() -> None:
             color: #697786;
             font-size: 10px;
             line-height: 1.45;
+        }
+
+        .confidence-context {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            border: 1px solid #202c39;
+            border-radius: 12px;
+            background: rgba(12,17,24,.78);
+            padding: 13px 16px;
+            margin: -3px 0 12px;
+        }
+
+        .confidence-context-main {
+            min-width: 0;
+        }
+
+        .confidence-context-title {
+            color: #c7d3de;
+            font-size: 10px;
+            font-weight: 760;
+            letter-spacing: .10em;
+            text-transform: uppercase;
+        }
+
+        .confidence-context-copy {
+            color: #7f8c9a;
+            font-size: 11px;
+            line-height: 1.5;
+            margin-top: 4px;
+        }
+
+        .confidence-context-copy strong {
+            color: #b9c7d4;
+        }
+
+        .confidence-context-stat {
+            flex: 0 0 auto;
+            text-align: right;
+            border-left: 1px solid #263340;
+            padding-left: 18px;
+        }
+
+        .confidence-context-stat strong {
+            display: block;
+            color: #dbe5ed;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .confidence-context-stat span {
+            display: block;
+            color: #687685;
+            font-size: 8px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-top: 4px;
         }
 
         .trace-result-header {
@@ -887,7 +1086,7 @@ def _human_action(result) -> str:
     )
 
 
-def _render_sidebar(result_state: dict | None) -> None:
+def _render_sidebar(result_state=None) -> None:
     with st.sidebar:
         st.markdown(
             """
@@ -923,7 +1122,15 @@ def _render_sidebar(result_state: dict | None) -> None:
         st.markdown("**RECENT**")
 
         if result_state:
-            q = result_state.get("question", HERO_QUESTION)
+            # `result` is an InvestigationResult object in session state, not a dict.
+            # Keep the sidebar read-only and extract the original investigation question
+            # from the result's investigation payload.
+            if isinstance(result_state, dict):
+                q = result_state.get("question", HERO_QUESTION)
+            else:
+                investigation = getattr(result_state, "investigation", None)
+                q = getattr(investigation, "question", HERO_QUESTION)
+
             st.markdown(
                 f'<div class="small-muted">Current investigation</div>'
                 f'<div style="color:#dce5ed;font-size:12px;margin-top:5px;">'
@@ -980,6 +1187,36 @@ def render_header() -> None:
     )
 
 
+def scroll_to_question(nonce: int) -> None:
+    """Scroll the parent Streamlit page to the investigation question."""
+    components.html(
+        f"""
+        <script>
+        (() => {{
+            const scroll = () => {{
+                const parentDoc = window.parent.document;
+                const target = parentDoc.querySelector(
+                    'textarea[aria-label="Investigation question"]'
+                );
+                if (target) {{
+                    target.scrollIntoView({{
+                        behavior: 'smooth',
+                        block: 'center'
+                    }});
+                    target.focus({{preventScroll: true}});
+                }}
+            }};
+            setTimeout(scroll, 80);
+            setTimeout(scroll, 350);
+            setTimeout(scroll, 700);
+        }})();
+        </script>
+        """,
+        height=0,
+        key=f"question-scroll-{nonce}",
+    )
+
+
 def render_question_input() -> str:
     st.markdown(
         '<div class="question-label">Investigation question</div>',
@@ -988,7 +1225,8 @@ def render_question_input() -> str:
 
     # Apply example selections BEFORE instantiating the text widget.
     # This avoids Streamlit's StreamlitWidgetAlreadyInstantiatedError.
-    if "pending_question" in st.session_state:
+    case_selected = "pending_question" in st.session_state
+    if case_selected:
         st.session_state["question_input"] = st.session_state.pop("pending_question")
 
     if "question_input" not in st.session_state:
@@ -1001,6 +1239,9 @@ def render_question_input() -> str:
         key="question_input",
         placeholder="Ask a manufacturing evidence question…",
     )
+
+    if case_selected:
+        scroll_to_question(st.session_state.get("scroll_nonce", 0))
 
     cols = st.columns([1, 5, 1.6])
     with cols[0]:
@@ -1036,12 +1277,21 @@ def render_question_input() -> str:
 def render_empty_state() -> None:
     st.markdown(
         """
-        <div class="empty-state">
-            <div class="empty-title">Ready to investigate.</div>
-            <div class="empty-copy">
-                Start with a specific manufacturing question. TRACE will show
-                the investigation path, evidence trail, historical changes,
-                evidence gaps, and the human verification step.
+        <div class="landing-shell">
+            <div class="landing-kicker">Manufacturing evidence intelligence</div>
+            <div class="landing-title">
+                Investigate why a decision exists.
+            </div>
+            <div class="landing-copy">
+                TRACE turns a manufacturing question into an evidence-seeking
+                investigation: it searches the corpus, reconstructs what changed,
+                identifies evidence gaps, and verifies the resulting claims.
+            </div>
+            <div class="landing-proof-row">
+                <span class="landing-proof"><strong>40</strong> documents</span>
+                <span class="landing-proof"><strong>70</strong> evidence chunks</span>
+                <span class="landing-proof">hybrid retrieval</span>
+                <span class="landing-proof">claim verification</span>
             </div>
         </div>
         """,
@@ -1103,16 +1353,15 @@ def render_finding_summary(result) -> None:
                 ("Finding", "gray"),
             )
             cards.append(
-                f"""
-                <div class="finding">
-                    {_badge(label, tone)}
-                    <div class="finding-name">{_escape(finding.statement[:190])}
-                    {"…" if len(finding.statement) > 190 else ""}</div>
-                    <div class="finding-meta">
-                        {len(finding.evidence_chunk_ids)} cited evidence item(s)
+                textwrap.dedent(
+                    f"""
+                    <div class="finding">
+                        {_badge(label, tone)}
+                        <div class="finding-name">{_escape(finding.statement[:190])}{"…" if len(finding.statement) > 190 else ""}</div>
+                        <div class="finding-meta">{len(finding.evidence_chunk_ids)} cited evidence item(s)</div>
                     </div>
-                </div>
-                """
+                    """
+                ).strip()
             )
 
         st.markdown(
@@ -1171,13 +1420,15 @@ def render_timeline(result) -> None:
         for event in result.timeline.events:
             sources = ", ".join(event.evidence_chunk_ids[:4])
             html.append(
-                f"""
-                <div class="timeline-event">
-                    <div class="timeline-date">{_escape(event.date)}</div>
-                    <div class="timeline-description">{_escape(event.description)}</div>
-                    <div class="timeline-source">Evidence · {_escape(sources)}</div>
-                </div>
-                """
+                textwrap.dedent(
+                    f"""
+                    <div class="timeline-event">
+                        <div class="timeline-date">{_escape(event.date)}</div>
+                        <div class="timeline-description">{_escape(event.description)}</div>
+                        <div class="timeline-source">Evidence · {_escape(sources)}</div>
+                    </div>
+                    """
+                ).strip()
             )
         html.append("</div>")
         st.markdown("".join(html), unsafe_allow_html=True)
@@ -1327,9 +1578,95 @@ def render_result_header(result, meta) -> None:
     )
 
 
+def render_confidence_context(result) -> None:
+    label, statement, tone, confidence, requires_human = _assessment(result)
+    claims = list(getattr(result.report, "claims", []) or [])
+    high_conf = sum(
+        1 for claim in claims
+        if float(getattr(claim, "confidence", 0.0) or 0.0) >= 0.80
+    )
+    st.markdown(
+        f"""
+        <div class="confidence-context">
+            <div class="confidence-context-main">
+                <div class="confidence-context-title">
+                    What the confidence applies to
+                </div>
+                <div class="confidence-context-copy">
+                    The {confidence:.0%} score applies to the <strong>stated assessment</strong>,
+                    not to every fact TRACE found. TRACE can have high-confidence historical
+                    evidence while still having low confidence that the current technical
+                    justification is established.
+                </div>
+            </div>
+            <div class="confidence-context-stat">
+                <strong>{high_conf}</strong>
+                <span>high-confidence claims</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_direct_answer(result) -> None:
+    answer = getattr(result.report, "direct_answer", "").strip()
+    evidence_ids = getattr(
+        result.report,
+        "direct_answer_evidence_chunk_ids",
+        [],
+    )
+
+    if not answer:
+        return
+
+    evidence_by_id = {
+        item.chunk_id: item
+        for item in result.investigation.evidence
+    }
+
+    source_labels = []
+
+    for chunk_id in evidence_ids:
+        item = evidence_by_id.get(chunk_id)
+        if item is None:
+            continue
+
+        source_labels.append(
+            f"{item.filename} · {chunk_id}"
+        )
+
+    evidence_html = ""
+
+    if source_labels:
+        evidence_html = f"""
+        <div class="direct-answer-evidence">
+            Evidence · {_escape("  •  ".join(source_labels))}
+        </div>
+        """
+
+    st.markdown(
+        f"""
+        <div class="direct-answer-card">
+            <div class="direct-answer-label">
+                DIRECT ANSWER
+            </div>
+
+            <div class="direct-answer-text">
+                {_escape(answer)}
+            </div>
+
+            {evidence_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_result(result, meta) -> None:
-    render_result_header(result, meta)
+    render_direct_answer(result)
     render_assessment(result)
+    render_confidence_context(result)
 
     c1, c2 = st.columns([1.35, 1], gap="medium")
     with c1:
@@ -1378,7 +1715,7 @@ def render_result(result, meta) -> None:
     render_evidence(result)
     render_claims(result)
 
-    with st.expander("Investigation data", expanded=False):
+    with st.expander("Investigation data · generated plan & result metadata", expanded=False):
         st.json(
             {
                 "question": result.investigation.question,
@@ -1473,11 +1810,11 @@ def main() -> None:
     if result is None:
         render_empty_state()
         st.markdown(
-            '<div style="height:16px"></div>'
-            '<div class="section-label">Investigation cases</div>'
-            '<div class="small-muted" style="margin:5px 0 12px;">'
-            'Use representative manufacturing cases to see how TRACE handles failures, supported conditions, and evidence gaps.'
-            '</div>',
+            '<div class="case-intro">'
+            '<div class="case-intro-title">Start with a case or ask your own question</div>'
+            '<div class="case-intro-copy">'
+            'Use a representative investigation below, or type any manufacturing evidence question above.'
+            '</div></div>',
             unsafe_allow_html=True,
         )
 
@@ -1502,6 +1839,9 @@ def main() -> None:
                 ):
                     st.session_state["pending_question"] = scenario.question
                     st.session_state["selected_scenario"] = scenario.id
+                    st.session_state["scroll_nonce"] = (
+                        st.session_state.get("scroll_nonce", 0) + 1
+                    )
                     st.session_state.pop("run_question", None)
                     st.session_state.pop("executed_question", None)
                     st.session_state.pop("result", None)

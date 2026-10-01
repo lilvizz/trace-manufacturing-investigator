@@ -46,13 +46,20 @@ class InvestigationReasoner:
 
         raw_response = self.client.generate(prompt)
 
-        claims, unresolved_questions = self._parse_response(
+        (
+            direct_answer,
+            direct_answer_evidence_ids,
+            claims,
+            unresolved_questions,
+        ) = self._parse_response(
             raw_response,
             investigation,
         )
 
         return InvestigationReport(
             question=investigation.question,
+            direct_answer=direct_answer,
+            direct_answer_evidence_chunk_ids=direct_answer_evidence_ids,
             claims=claims,
             unresolved_questions=unresolved_questions,
         )
@@ -186,7 +193,7 @@ IMPORTANT REASONING RULES:
     technically re-established for the changed equipment.
 
 18. For any claim about CURRENT technical justification of an existing
-    parameter or limit:
+    parameter, threshold, specification, control limit, or operating rule:
 
     Use claim_type:
         "current_technical_justification"
@@ -208,16 +215,31 @@ IMPORTANT REASONING RULES:
     - absence of a later rejection
     - a generic equipment qualification
 
-19. For the specific 42.3°C investigation, explicitly distinguish:
+19. Tailor the reasoning to the USER QUESTION.
 
-    a) why 42.3°C was originally created,
-    b) what happened to the equipment/process afterward,
-    c) what later evidence establishes about PX-400 capability,
-    d) why 42.3°C remained administratively in place,
-    e) whether technical justification for the exact 42.3°C limit
-       was re-established after the equipment change.
+    Do NOT assume the user is asking about the flagship 42.3°C case,
+    Press-07, PX-200, PX-400, or any other specific historical case
+    unless those entities actually appear in the user's question or
+    supplied evidence.
 
-20. If an administrative/commercial proposal was rejected or deferred,
+    Identify the specific subject, decision, parameter, equipment,
+    process, event, or document the user asked about and answer that
+    question directly.
+
+    The investigation subquestions and retrieved evidence are supporting
+    context, not a replacement for the user's actual question.
+
+20. If the investigation concerns a historical parameter, limit, or
+    decision that later changed equipment/process/context, distinguish
+    as applicable:
+    - original basis
+    - what changed
+    - later capability or observations
+    - administrative persistence or decisions
+    - current technical justification
+    - evidence gaps
+
+21. If an administrative/commercial proposal was rejected or deferred,
     do NOT characterize that as a technical rejection unless the
     evidence explicitly states a technical reason.
 
@@ -243,10 +265,9 @@ IMPORTANT REASONING RULES:
 
 24. Evidence gaps are first-class findings.
 
-    When the evidence establishes the original basis and later equipment
-    capability but does not establish current technical re-justification,
-    explicitly produce an evidence_gap or
-    current_technical_justification claim with:
+    When the available evidence does not establish an important part
+    of the user's question, explicitly produce an evidence_gap claim
+    and/or a relevant claim with:
         stance = "not_established"
 
 25. Do not use "supports" merely because a cited document is related
@@ -307,6 +328,10 @@ Return ONLY valid JSON.
 The JSON schema is:
 
 {{
+  "direct_answer": {{
+    "text": "A concise answer to the USER QUESTION using only the supplied evidence.",
+    "evidence_chunk_ids": ["..."]
+  }},
   "claims": [
     {{
       "statement": "...",
@@ -321,6 +346,13 @@ The JSON schema is:
 
 Additional output requirements:
 
+- direct_answer.text MUST directly answer the USER QUESTION.
+- direct_answer MUST NOT simply repeat the overall evidence-gap conclusion
+  unless that conclusion is actually the answer to the user's question.
+- direct_answer.evidence_chunk_ids MUST contain only supplied evidence chunk IDs.
+- The direct answer should cite the evidence needed to support its factual content.
+- If the available evidence does not establish the answer, say so explicitly
+  rather than substituting an answer to a different question.
 - claim_type MUST be one of the allowed values above.
 - stance MUST be one of the allowed values above.
 - evidence_chunk_ids MUST contain only supplied evidence chunk IDs.
@@ -424,7 +456,7 @@ Additional output requirements:
         self,
         raw_response: str,
         investigation: Investigation,
-    ) -> tuple[list[ReasoningClaim], list[str]]:
+    ) -> tuple[str, list[str], list[ReasoningClaim], list[str]]:
 
         try:
             payload = json.loads(raw_response)
@@ -437,6 +469,47 @@ Additional output requirements:
             evidence.chunk_id
             for evidence in investigation.evidence
         }
+
+        # ---------------------------------------------------------
+        # Direct answer
+        # ---------------------------------------------------------
+        # This is deliberately separate from the global claim set.
+        # It forces the model to answer the user's actual question
+        # instead of allowing the flagship evidence-gap conclusion to
+        # become the answer to every query.
+        raw_direct_answer = payload.get("direct_answer", {})
+
+        if not isinstance(raw_direct_answer, dict):
+            raw_direct_answer = {}
+
+        direct_answer_text = str(
+            raw_direct_answer.get("text", "")
+        ).strip()
+
+        raw_direct_answer_ids = raw_direct_answer.get(
+            "evidence_chunk_ids",
+            [],
+        )
+
+        if not isinstance(raw_direct_answer_ids, list):
+            raw_direct_answer_ids = []
+
+        direct_answer_evidence_ids = [
+            chunk_id
+            for chunk_id in raw_direct_answer_ids
+            if isinstance(chunk_id, str)
+            and chunk_id in evidence_ids
+        ]
+
+        # Never let an uncited model answer become a trusted answer.
+        # A direct answer with no valid evidence is replaced by an explicit
+        # evidence-gap response. This is intentionally conservative.
+        if not direct_answer_text or not direct_answer_evidence_ids:
+            direct_answer_text = (
+                "The available evidence does not establish a direct "
+                "answer to the investigation question."
+            )
+            direct_answer_evidence_ids = []
 
         claims = []
 
@@ -534,4 +607,9 @@ Additional output requirements:
             if str(question).strip()
         ]
 
-        return claims, unresolved
+        return (
+            direct_answer_text,
+            direct_answer_evidence_ids,
+            claims,
+            unresolved,
+        )

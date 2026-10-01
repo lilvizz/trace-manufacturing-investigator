@@ -101,3 +101,8 @@ class InvestigationReport:
     question: str
     claims: list[ReasoningClaim] = field(default_factory=list)
     unresolved_questions: list[str] = field(default_factory=list)
+
+    # Question-specific answer. Kept after the existing fields so older
+    # positional construction remains backward-compatible.
+    direct_answer: str = ""
+    direct_answer_evidence_chunk_ids: list[str] = field(default_factory=list)

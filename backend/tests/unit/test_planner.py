@@ -248,3 +248,43 @@ def test_gemini_planner_adds_required_investigation_anchors():
     ) in plan.subquestions
 
     assert len(plan.subquestions) == 8
+    
+def test_deterministic_planner_is_question_dependent():
+    planner = InvestigationPlanner()
+
+    replacement_plan = planner.create_plan(
+        "What evidence documents the 2011 replacement of the equipment?"
+    )
+
+    calibration_plan = planner.create_plan(
+        "What evidence shows the calibration failure?"
+    )
+
+    assert replacement_plan.subquestions != calibration_plan.subquestions
+
+
+def test_generic_question_does_not_get_flagship_specific_anchor_questions():
+    planner = InvestigationPlanner()
+
+    plan = planner.create_plan(
+        "What evidence documents the 2011 replacement of the equipment?"
+    )
+
+    assert not any(
+        "42.3" in question or "current operating limit" in question
+        for question in plan.subquestions
+    )
+
+
+def test_planner_preserves_question_specific_focus():
+    planner = InvestigationPlanner()
+
+    question = "What evidence shows the calibration failure?"
+    plan = planner.create_plan(question)
+
+    assert plan.question == question
+    assert any(
+        "failure" in subquestion.lower()
+        or "evidence" in subquestion.lower()
+        for subquestion in plan.subquestions
+    )

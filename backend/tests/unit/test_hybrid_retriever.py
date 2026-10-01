@@ -198,3 +198,59 @@ def test_invalid_top_k_raises():
 
     with pytest.raises(ValueError):
         retriever.search("PX-400", top_k=0)
+        
+def test_query_is_passed_to_all_retrieval_channels():
+    class RecordingRanker:
+        def __init__(self):
+            self.queries = []
+
+        def search(self, query, top_k=5):
+            self.queries.append(query)
+            return []
+
+    bm25 = RecordingRanker()
+    vector = RecordingRanker()
+    entity = RecordingRanker()
+
+    retriever = HybridRetriever(
+        bm25_searcher=bm25,
+        vector_searcher=vector,
+        entity_matcher=entity,
+    )
+
+    query = "What evidence documents the 2011 replacement of the equipment?"
+
+    retriever.search(query, top_k=5)
+
+    assert bm25.queries == [query]
+    assert vector.queries == [query]
+    assert entity.queries == [query]
+    
+def test_different_queries_are_not_collapsed_by_hybrid_retriever():
+    class RecordingRanker:
+        def __init__(self):
+            self.queries = []
+
+        def search(self, query, top_k=5):
+            self.queries.append(query)
+            return []
+
+    bm25 = RecordingRanker()
+    vector = RecordingRanker()
+    entity = RecordingRanker()
+
+    retriever = HybridRetriever(
+        bm25_searcher=bm25,
+        vector_searcher=vector,
+        entity_matcher=entity,
+    )
+
+    query_1 = "What evidence documents the 2011 replacement?"
+    query_2 = "What evidence shows the calibration failure?"
+
+    retriever.search(query_1)
+    retriever.search(query_2)
+
+    assert bm25.queries == [query_1, query_2]
+    assert vector.queries == [query_1, query_2]
+    assert entity.queries == [query_1, query_2]

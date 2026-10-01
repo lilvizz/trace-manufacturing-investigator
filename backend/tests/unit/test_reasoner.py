@@ -257,3 +257,70 @@ def test_prompt_distinguishes_persistence_from_reaffirmation():
     assert "Do not infer reaffirmation from mere persistence" in prompt
     assert "administratively retained" in prompt
     assert "carried forward unchanged" in prompt
+    
+def test_direct_answer_is_parsed_with_valid_evidence():
+    response = json.dumps(
+        {
+            "direct_answer": {
+                "text": "The 2011 replacement was documented through ECO-2011-184.",
+                "evidence_chunk_ids": ["chunk-1"],
+            },
+            "claims": [],
+            "unresolved_questions": [],
+        }
+    )
+
+    client = FakeReasoningClient(response)
+    report = InvestigationReasoner(client).reason(make_investigation())
+
+    assert report.direct_answer == (
+        "The 2011 replacement was documented through ECO-2011-184."
+    )
+    assert report.direct_answer_evidence_chunk_ids == ["chunk-1"]
+
+
+def test_direct_answer_without_valid_citation_becomes_not_established():
+    response = json.dumps(
+        {
+            "direct_answer": {
+                "text": "The equipment was replaced because the old system was inadequate.",
+                "evidence_chunk_ids": ["DOES-NOT-EXIST"],
+            },
+            "claims": [],
+            "unresolved_questions": [],
+        }
+    )
+
+    client = FakeReasoningClient(response)
+    report = InvestigationReasoner(client).reason(make_investigation())
+
+    assert report.direct_answer == (
+        "The available evidence does not establish a direct answer "
+        "to the investigation question."
+    )
+    assert report.direct_answer_evidence_chunk_ids == []
+
+
+def test_direct_answer_is_not_hard_coded_to_flagship_case():
+    response = json.dumps(
+        {
+            "direct_answer": {
+                "text": "The calibration failure was documented in the supplied evidence.",
+                "evidence_chunk_ids": ["chunk-1"],
+            },
+            "claims": [],
+            "unresolved_questions": [],
+        }
+    )
+
+    client = FakeReasoningClient(response)
+
+    investigation = make_investigation()
+    investigation.question = (
+        "What evidence documents the calibration failure?"
+    )
+
+    report = InvestigationReasoner(client).reason(investigation)
+
+    assert "42.3°C" not in report.direct_answer
+    assert "calibration failure" in report.direct_answer

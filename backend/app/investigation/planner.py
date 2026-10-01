@@ -230,6 +230,53 @@ Return ONLY valid JSON in this exact structure:
         if any(
             term in question_lower
             for term in [
+                "document",
+                "documents",
+                "evidence",
+                "record",
+                "records",
+                "show",
+                "shows",
+                "describe",
+                "describes",
+            ]
+        ):
+            add(
+                "Which documents or records directly address the "
+                "specific event, condition, decision, or failure in "
+                "the user's question?"
+            )
+
+            add(
+                "What facts about the specific event, condition, "
+                "decision, or failure are explicitly supported by "
+                "those records?"
+            )
+
+        if any(
+            term in question_lower
+            for term in [
+                "failure",
+                "failed",
+                "fault",
+                "defect",
+                "issue",
+                "incident",
+            ]
+        ):
+            add(
+                "What documented failure, fault, defect, or incident "
+                "occurred, and when was it recorded?"
+            )
+
+            add(
+                "What documented cause, impact, corrective action, "
+                "or follow-up is associated with the failure?"
+            )
+
+        if any(
+            term in question_lower
+            for term in [
                 "why",
                 "origin",
                 "original",
