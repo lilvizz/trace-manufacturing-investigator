@@ -34,6 +34,13 @@ class InvestigationPlanner:
 
         question = question.strip()
 
+        # Narrow factual/document questions should not trigger the full
+        # historical/current-basis investigation. This preserves the
+        # original planner below while adding a small, deterministic
+        # routing layer for focused lookups.
+        if self._is_narrow_question(question):
+            return self._create_narrow_plan(question)
+
         if self.planning_client is None:
             return self._create_deterministic_plan(question)
 
@@ -41,6 +48,71 @@ class InvestigationPlanner:
             return self._create_gemini_plan(question)
         except Exception:
             return self._create_deterministic_plan(question)
+
+
+    @staticmethod
+    def _is_narrow_question(question: str) -> bool:
+        q = " ".join(question.lower().split())
+        if not q.startswith(("what ", "which ", "who ", "when ", "where ", "how many ")):
+            return False
+
+        deep_terms = (
+            "why", "rationale", "justification", "revalidated",
+            "revalidation", "re-validated", "re-justif", "technical basis",
+            "still supported", "current technical", "original basis",
+            "what changed since", "history", "should", "recommend",
+            "current limit", "current parameter", "prove", "contradict",
+        )
+        if any(term in q for term in deep_terms):
+            return False
+
+        return any(term in q for term in (
+            "equipment", "replacement", "replaced", "installed", "change",
+            "changed", "document", "documents", "record", "records",
+            "evidence", "failure", "failed", "fault", "incident",
+            "proposal", "approval", "calibration", "work order", "eco",
+        ))
+
+    def _create_narrow_plan(self, question: str) -> InvestigationPlan:
+        q = question.lower()
+        subquestions: list[str] = []
+
+        def add(text: str) -> None:
+            if text not in subquestions:
+                subquestions.append(text)
+
+        if any(term in q for term in (
+            "document", "documents", "record", "records", "evidence",
+        )):
+            add("Which documents or records directly address the specific event, condition, decision, or failure in the user's question?")
+            add("What facts about the specific event, condition, decision, or failure are explicitly supported by those records?")
+
+        if any(term in q for term in (
+            "equipment", "replacement", "replaced", "installed", "change", "changed", "eco",
+        )):
+            add("What equipment, asset, or configuration was present before the change and what was installed or changed afterward?")
+            add("What documented hardware, control, sensor, process, or configuration changes resulted from the event?")
+
+        if any(term in q for term in (
+            "failure", "failed", "fault", "defect", "incident",
+        )):
+            add("What documented failure, fault, defect, or incident occurred, and when was it recorded?")
+            add("What documented cause, impact, corrective action, or follow-up is associated with the failure?")
+
+        if "approval" in q or "proposal" in q:
+            add("Which record contains the approval, rejection, or decision, and what reason is explicitly documented?")
+
+        # Keep the narrow plan genuinely narrow. Two focused questions are
+        # enough for a direct lookup; a third provides corroboration when
+        # the wording is ambiguous.
+        if not subquestions:
+            add("Which records directly answer the user's factual question?")
+            add("What facts are explicitly supported by those records?")
+
+        return InvestigationPlan(
+            question=question,
+            subquestions=subquestions[:4],
+        )
 
     def _create_gemini_plan(self, question: str) -> InvestigationPlan:
         prompt = self._build_prompt(question)
@@ -226,53 +298,6 @@ Return ONLY valid JSON in this exact structure:
         def add(question_text: str) -> None:
             if question_text not in subquestions:
                 subquestions.append(question_text)
-
-        if any(
-            term in question_lower
-            for term in [
-                "document",
-                "documents",
-                "evidence",
-                "record",
-                "records",
-                "show",
-                "shows",
-                "describe",
-                "describes",
-            ]
-        ):
-            add(
-                "Which documents or records directly address the "
-                "specific event, condition, decision, or failure in "
-                "the user's question?"
-            )
-
-            add(
-                "What facts about the specific event, condition, "
-                "decision, or failure are explicitly supported by "
-                "those records?"
-            )
-
-        if any(
-            term in question_lower
-            for term in [
-                "failure",
-                "failed",
-                "fault",
-                "defect",
-                "issue",
-                "incident",
-            ]
-        ):
-            add(
-                "What documented failure, fault, defect, or incident "
-                "occurred, and when was it recorded?"
-            )
-
-            add(
-                "What documented cause, impact, corrective action, "
-                "or follow-up is associated with the failure?"
-            )
 
         if any(
             term in question_lower

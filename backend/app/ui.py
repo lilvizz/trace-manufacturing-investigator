@@ -13,6 +13,9 @@ from __future__ import annotations
 import json
 import os
 import sys
+import re
+from html import unescape
+from html.parser import HTMLParser
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -388,6 +391,7 @@ def inject_css() -> None:
             font-size: 12px;
             font-weight: 650;
             color: #e2e8ee;
+            line-height: 1.45;
         }
 
         .finding-meta {
@@ -438,6 +442,18 @@ def inject_css() -> None:
             margin: 3px 0 4px 5px;
             padding-left: 25px;
             border-left: 1px solid #293441;
+        }
+
+        .timeline-condensed .timeline-event {
+            padding-bottom: 11px;
+        }
+
+        .timeline-condensed .timeline-description {
+            line-height: 1.38;
+        }
+
+        .timeline-condensed .timeline-source {
+            margin-top: 2px;
         }
 
         .timeline-event {
@@ -999,23 +1015,61 @@ def _badge(label: str, tone: str) -> str:
 
 
 def _primary_claim(result):
-    claims = result.report.claims
+    """Choose the assessment claim that best matches the user's question."""
+    claims = list(getattr(result.report, "claims", []) or [])
+    if not claims:
+        return None
 
-    priority = [
-        ClaimType.CURRENT_TECHNICAL_JUSTIFICATION,
-        ClaimType.EVIDENCE_GAP,
-        ClaimType.ORIGINAL_BASIS,
-        ClaimType.CURRENT_CAPABILITY,
-        ClaimType.ADMINISTRATIVE_ACTION,
-        ClaimType.RECOMMENDATION,
-    ]
+    question = getattr(result.investigation, "question", "").lower()
 
-    for claim_type in priority:
-        matches = [c for c in claims if c.claim_type == claim_type]
-        if matches:
-            return max(matches, key=lambda c: c.confidence)
+    # Prefer the claim type that directly answers the question rather than
+    # always prioritizing current technical justification.
+    type_terms = {
+        ClaimType.ORIGINAL_BASIS: (
+            "why", "original", "established", "basis", "rationale", "history",
+        ),
+        ClaimType.CURRENT_CAPABILITY: (
+            "what equipment", "which equipment", "what changed", "controller",
+            "sensor", "capability", "performance", "installed",
+        ),
+        ClaimType.ADMINISTRATIVE_ACTION: (
+            "approved", "approval", "rejected", "proposal", "decision",
+            "replacement", "change order", "eco",
+        ),
+        ClaimType.CURRENT_TECHNICAL_JUSTIFICATION: (
+            "technically justified", "technical justification", "revalidated",
+            "revalidation", "revalidated", "re-validated", "re-justified",
+            "re-justification", "re-derived", "re-derived", "still supported",
+            "current technical basis", "prove the limit", "does that prove",
+        ),
+        ClaimType.EVIDENCE_GAP: (
+            "evidence gap", "missing evidence", "what evidence", "evidence",
+        ),
+        ClaimType.RECOMMENDATION: (
+            "recommend", "should we", "what should", "action",
+        ),
+    }
 
-    return claims[0] if claims else None
+    scored = []
+    for claim in claims:
+        score = 0
+        terms = type_terms.get(claim.claim_type, ())
+        score += sum(3 for term in terms if term in question)
+
+        # Direct factual questions should not be hijacked by a
+        # NOT_ESTABLISHED technical-justification claim.
+        if (
+            claim.claim_type == ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+            and any(question.startswith(prefix) for prefix in ("what ", "which ", "who ", "when "))
+            and not any(term in question for term in type_terms[ClaimType.CURRENT_TECHNICAL_JUSTIFICATION])
+        ):
+            score -= 8
+
+        score += float(getattr(claim, "confidence", 0.0) or 0.0)
+        scored.append((score, claim))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[0][1]
 
 
 def _claim_for_type(result, claim_type):
@@ -1213,7 +1267,6 @@ def scroll_to_question(nonce: int) -> None:
         </script>
         """,
         height=0,
-        key=f"question-scroll-{nonce}",
     )
 
 
@@ -1357,7 +1410,7 @@ def render_finding_summary(result) -> None:
                     f"""
                     <div class="finding">
                         {_badge(label, tone)}
-                        <div class="finding-name">{_escape(finding.statement[:190])}{"…" if len(finding.statement) > 190 else ""}</div>
+                        <div class="finding-name">{_escape(finding.statement)}</div>
                         <div class="finding-meta">{len(finding.evidence_chunk_ids)} cited evidence item(s)</div>
                     </div>
                     """
@@ -1404,31 +1457,175 @@ def render_investigation_path(result) -> None:
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+_HEADER_LINE = re.compile(
+    r"^(ref|report\s+no|date|prepared\s+by|reviewed\s+by|approved\s+by|"
+    r"distribution|title|document\s+no|revision|owner|effective\s+date|"
+    r"scope|page\s+\d)\s*[:.]",
+    re.IGNORECASE,
+)
+
+_DANGLING_WORDS = (
+    "and", "or", "to", "of", "the", "see", "ref", "a", "an", "see,",
+)
+
+
+def _looks_like_fragment(description: str) -> bool:
+    """Generic structural check for a timeline event description that is
+    an ill-formed mid-sentence/document-header extraction artifact rather
+    than a clean, self-contained statement.
+
+    This is intentionally content-agnostic: it never inspects which words
+    (dates, IDs, topics) appear, only the shape of the text. That keeps it
+    equally applicable to any investigation question, not just the
+    Press-07 flagship case.
+    """
+    text = description.strip()
+    if not text:
+        return True
+
+    # Looks like a document-header field ("Ref: ...", "Report No: ...").
+    if _HEADER_LINE.match(text):
+        return True
+
+    # A description that starts mid-sentence (lowercase first letter)
+    # is a wrapped continuation fragment, not a standalone statement.
+    first_alpha = next((c for c in text if c.isalpha()), None)
+    if first_alpha is not None and first_alpha.islower():
+        return True
+
+    # Unbalanced parentheses/brackets indicate a sentence was cut
+    # mid-clause (common with "(see Section 4, ...)"-style asides).
+    if text.count(")") != text.count("("):
+        return True
+    if text.count("]") != text.count("["):
+        return True
+
+    # Two or more "Label: value" fields on one line is a form/record
+    # excerpt (e.g. "WO No: WO-18-0322 ... Date Completed: 12-SEP-2018"),
+    # not a narrative sentence. Generic on field count, not field names.
+    if len(re.findall(r"[A-Za-z][A-Za-z \-]{1,30}:\s", text)) >= 2:
+        return True
+
+    # Looks like a raw delimited data record (a CSV/export row pulled in
+    # verbatim): several short, comma-separated tokens rather than prose.
+    # Generic on shape (token count/length), not on any column name.
+    segments = [s.strip() for s in text.split(",")]
+    if len(segments) >= 5:
+        short_segments = sum(1 for s in segments if len(s) <= 20)
+        if short_segments >= len(segments) - 1:
+            return True
+
+    # A dangling trailing connective/preposition, or trailing punctuation
+    # that implies continuation, means the extraction stopped mid-clause.
+    last_word = re.split(r"\s+", text.strip())[-1].lower().strip(".,;:()")
+    if text[-1] in ",:;-" or last_word in _DANGLING_WORDS:
+        return True
+
+    return False
+
+
+def _condense_timeline_events(result):
+    """Keep the displayed timeline focused on clean, decision-relevant
+    events, for any investigation question (not only the flagship case).
+
+    This does not alter or discard the underlying extracted timeline
+    data returned by the backend (`result.timeline.events`); it only
+    selects which already-extracted events are shown, in the same way
+    for every question.
+    """
+    events = list(getattr(result.timeline, "events", []) or [])
+    if not events:
+        return [], 0
+
+    # Remove exact duplicate date/description pairs first.
+    unique = []
+    seen = set()
+    for event in events:
+        key = (str(event.date), str(event.description).strip())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(event)
+
+    total_unique = len(unique)
+
+    # Drop ill-formed extraction fragments (document-header lines,
+    # mid-sentence continuations, unbalanced clauses). This is a
+    # structural filter, not a topic/keyword filter, so it applies
+    # identically to every question.
+    well_formed = [
+        event for event in unique
+        if not _looks_like_fragment(str(event.description))
+    ]
+
+    # If filtering would remove every event (e.g. a corpus whose dated
+    # lines are all header-style), fall back to the deduped set rather
+    # than showing an empty timeline.
+    candidates = well_formed if well_formed else unique
+
+    priority_terms = (
+        "42.3", "limit", "upper control", "boundary", "px-200", "px-400",
+        "replacement", "change", "eco-", "qualification", "requalification",
+        "validation", "revalidation", "characterization", "44.0", "43.0",
+        "proposal", "rejected", "current", "sop", "spc",
+    )
+
+    scored = []
+    for index, event in enumerate(candidates):
+        text = f"{event.date} {event.description}".lower()
+        score = sum(2 for term in priority_terms if term in text)
+        # Preserve chronology as the tie-breaker.
+        scored.append((score, index, event))
+
+    max_events = 12
+    if len(scored) <= max_events:
+        selected = sorted(scored, key=lambda item: item[1])
+        return [item[2] for item in selected], total_unique
+
+    selected = sorted(
+        sorted(scored, key=lambda item: (-item[0], item[1]))[:max_events],
+        key=lambda item: item[1],
+    )
+    return [item[2] for item in selected], total_unique
+
+
 def render_timeline(result) -> None:
     st.markdown(
         '<div class="result-card"><div class="section-label">Evidence timeline</div>',
         unsafe_allow_html=True,
     )
 
-    if not result.timeline.events:
+    events, total_events = _condense_timeline_events(result)
+
+    if not events:
         st.markdown(
             '<div class="small-muted">No explicit dated events were extracted from the retrieved evidence.</div>',
             unsafe_allow_html=True,
         )
     else:
-        html = ['<div class="timeline">']
-        for event in result.timeline.events:
-            sources = ", ".join(event.evidence_chunk_ids[:4])
+        if total_events > len(events):
+            st.markdown(
+                f'<div class="small-muted" style="margin-bottom:10px;">'
+                f'Showing {len(events)} key events from {total_events} extracted events.</div>',
+                unsafe_allow_html=True,
+            )
+
+        # Built as single-line fragments (no embedded newlines) and joined
+        # with no separators. A multi-line fragment here would leave a
+        # blank/whitespace-only line at each join point, and Streamlit's
+        # markdown renderer treats a blank line as the end of the current
+        # raw-HTML block — every fragment after the first would then be
+        # parsed as an indented code block and shown as literal text
+        # instead of rendered HTML. Single-line strings can't trigger that.
+        html = ['<div class="timeline timeline-condensed">']
+        for event in events:
+            sources = ", ".join(event.evidence_chunk_ids[:3])
             html.append(
-                textwrap.dedent(
-                    f"""
-                    <div class="timeline-event">
-                        <div class="timeline-date">{_escape(event.date)}</div>
-                        <div class="timeline-description">{_escape(event.description)}</div>
-                        <div class="timeline-source">Evidence · {_escape(sources)}</div>
-                    </div>
-                    """
-                ).strip()
+                '<div class="timeline-event">'
+                f'<div class="timeline-date">{_escape(event.date)}</div>'
+                f'<div class="timeline-description">{_escape(event.description)}</div>'
+                f'<div class="timeline-source">Evidence · {_escape(sources)}</div>'
+                "</div>"
             )
         html.append("</div>")
         st.markdown("".join(html), unsafe_allow_html=True)
@@ -1493,6 +1690,21 @@ def render_evidence(result) -> None:
     st.markdown("</div>", unsafe_allow_html=True)
 
 
+def _display_claim_statement(claim) -> str:
+    """Prevent a verified NOT_ESTABLISHED technical claim from displaying
+    a stale/contradictory positive statement returned by Gemini.
+    """
+    if (
+        claim.claim_type == ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+        and claim.stance == EvidenceStance.NOT_ESTABLISHED
+    ):
+        return (
+            "The available evidence does not establish the current technical "
+            "basis for the parameter or limit on the current equipment configuration."
+        )
+    return str(claim.statement or "")
+
+
 def render_claims(result) -> None:
     st.markdown(
         '<div class="result-card"><div class="section-label">'
@@ -1512,7 +1724,7 @@ def render_claims(result) -> None:
                     {_badge(label, tone)}
                     <span class="small-muted">{claim.confidence:.0%} confidence</span>
                 </div>
-                <div class="evidence-file">{_escape(claim.statement)}</div>
+                <div class="evidence-file">{_escape(_display_claim_statement(claim))}</div>
                 <div class="evidence-path">
                     {_escape(claim.claim_type.value if claim.claim_type else "untyped claim")}
                     · Evidence { _escape(evidence_ids) }
@@ -1609,6 +1821,48 @@ def render_confidence_context(result) -> None:
     )
 
 
+_FENCE_OPEN = re.compile(r"```(?:html|text|markdown)?\s*", re.IGNORECASE)
+_FENCE_CLOSE = re.compile(r"```")
+_TAG = re.compile(r"<\/?[a-zA-Z][^<>\n]{0,200}>")
+
+
+def _clean_direct_answer(answer: str) -> str:
+    """Return plain answer text; UI/HTML markup can never reach the renderer.
+
+    This intentionally does NOT use html.parser.HTMLParser. HTMLParser is
+    built to parse well-formed HTML, and when fed a malformed tag (for
+    example a quoted attribute whose closing quote is missing), it
+    greedily treats everything that follows as still being inside that
+    one tag and never calls handle_data for it again — so the entire
+    real answer text is silently discarded, not just the markup. A
+    bounded, iteratively-applied regex has no such failure mode: it only
+    ever removes text that matches `<tag ...>` and never consumes
+    anything past the next `>` or newline.
+    """
+    text = unescape(str(answer or "").strip())
+
+    # Strip markdown code fences wherever they appear (not just at the
+    # very start of the string) so a model response with preamble text
+    # before a fenced block doesn't leak the fence markers.
+    text = _FENCE_OPEN.sub("", text)
+    text = _FENCE_CLOSE.sub("", text)
+
+    # Repeatedly strip anything that looks like an HTML/XML tag. This is
+    # bounded ([^<>\n]{0,200}) and line-scoped, so it cannot run away or
+    # swallow real content the way an unterminated-attribute tag can
+    # confuse a stateful HTML parser.
+    prev = None
+    while prev != text:
+        prev = text
+        text = _TAG.sub("", text)
+
+    # Entity decoding can expose another literal tag layer; strip once more.
+    text = unescape(text)
+    text = _TAG.sub("", text)
+
+    return " ".join(text.split()).strip()
+
+
 def render_direct_answer(result) -> None:
     answer = getattr(result.report, "direct_answer", "").strip()
     evidence_ids = getattr(
@@ -1619,6 +1873,8 @@ def render_direct_answer(result) -> None:
 
     if not answer:
         return
+
+    answer = _clean_direct_answer(answer)
 
     evidence_by_id = {
         item.chunk_id: item
@@ -1639,31 +1895,98 @@ def render_direct_answer(result) -> None:
     evidence_html = ""
 
     if source_labels:
-        evidence_html = f"""
-        <div class="direct-answer-evidence">
-            Evidence · {_escape("  •  ".join(source_labels))}
-        </div>
-        """
+        evidence_html = (
+            '<div class="direct-answer-evidence">Evidence · '
+            f'{_escape("  •  ".join(source_labels))}</div>'
+        )
 
+    # Built as a single-line string deliberately: a multi-line f-string
+    # with a blank line between the inner <div>s (as this previously was)
+    # causes Streamlit's markdown renderer to treat the blank line as the
+    # end of the raw-HTML block. Everything after it then gets parsed as
+    # an indented code block and shown as literal "<div>...</div>" text
+    # instead of being rendered — that was the actual root cause of the
+    # HTML-leak bug, not anything inside _clean_direct_answer. A single
+    # physical line has no blank line to trigger that, by construction.
+    card_html = (
+        '<div class="direct-answer-card">'
+        '<div class="direct-answer-label">DIRECT ANSWER</div>'
+        f'<div class="direct-answer-text">{_escape(answer)}</div>'
+        f"{evidence_html}"
+        "</div>"
+    )
+
+    st.markdown(card_html, unsafe_allow_html=True)
+
+
+def _is_simple_factual_question(question: str) -> bool:
+    """Identify narrow factual lookups that do not need the full case UI."""
+    q = " ".join(str(question or "").lower().split())
+
+    simple_starts = (
+        "what ", "which ", "who ", "when ", "where ", "how many ",
+    )
+    complex_terms = (
+        "why", "evidence", "prove", "justif", "revalid", "re-",
+        "supported", "current basis", "still", "changed as a result",
+        "what changed", "history", "rationale", "approve", "reject",
+        "gap", "contradict", "should",
+    )
+
+    return q.startswith(simple_starts) and not any(term in q for term in complex_terms)
+
+
+def render_simple_result(result, meta) -> None:
+    """Compact result view for narrow factual questions."""
+    render_direct_answer(result)
+    render_assessment(result)
+
+    # Keep only a small amount of supporting provenance for a factual lookup.
     st.markdown(
-        f"""
-        <div class="direct-answer-card">
-            <div class="direct-answer-label">
-                DIRECT ANSWER
-            </div>
-
-            <div class="direct-answer-text">
-                {_escape(answer)}
-            </div>
-
-            {evidence_html}
-        </div>
-        """,
+        '<div class="result-card"><div class="section-label">Supporting evidence</div>',
         unsafe_allow_html=True,
     )
 
+    evidence = sorted(
+        result.investigation.evidence,
+        key=lambda item: item.retrieval_score,
+        reverse=True,
+    )
+
+    if not evidence:
+        st.markdown(
+            '<div class="small-muted">No supporting evidence was retrieved.</div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        for item in evidence[:4]:
+            preview = item.content.strip()
+            if len(preview) > 420:
+                preview = preview[:420].rstrip() + "…"
+
+            st.markdown(
+                f"""
+                <div class="evidence-card">
+                    <div class="evidence-top">
+                        <span class="evidence-id">{_escape(item.chunk_id)}</span>
+                        <span class="small-muted">retrieval {item.retrieval_score:.4f}</span>
+                    </div>
+                    <div class="evidence-file">{_escape(item.filename)}</div>
+                    <div class="evidence-content">{_escape(preview)}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 def render_result(result, meta) -> None:
+    question = getattr(result.investigation, "question", "")
+    if _is_simple_factual_question(question):
+        render_simple_result(result, meta)
+        return
+
     render_direct_answer(result)
     render_assessment(result)
     render_confidence_context(result)
@@ -1714,17 +2037,6 @@ def render_result(result, meta) -> None:
 
     render_evidence(result)
     render_claims(result)
-
-    with st.expander("Investigation data · generated plan & result metadata", expanded=False):
-        st.json(
-            {
-                "question": result.investigation.question,
-                "subquestions": result.plan.subquestions,
-                "unresolved_questions": result.report.unresolved_questions,
-                "evidence_count": len(result.investigation.evidence),
-                "timeline_events": len(result.timeline.events),
-            }
-        )
 
 def main() -> None:
     st.set_page_config(

@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from app.investigation.analyzer import _REJUSTIFICATION_MARKERS
+from app.investigation.analyzer import _contains_explicit_rejustification
 from app.investigation.models import (
     ClaimType,
     EvidenceStance,
@@ -136,9 +136,7 @@ class ClaimVerifier:
             if evidence is None:
                 continue
 
-            if _REJUSTIFICATION_MARKERS.search(
-                evidence.content
-            ):
+            if _contains_explicit_rejustification(evidence.content):
                 rejustification_evidence.append(
                     evidence
                 )

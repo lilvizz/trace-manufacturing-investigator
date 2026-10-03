@@ -1,5 +1,7 @@
 import re
 
+from app.retrieval.entity_matcher import extract_entities
+
 from app.investigation.models import (
     EvidenceAnalysis,
     EvidenceFinding,
@@ -75,6 +77,77 @@ _REJUSTIFICATION_MARKERS = re.compile(
 )
 
 
+_NEGATION_WORDS = {"no", "not", "never", "without", "none"}
+
+
+def _contains_explicit_rejustification(text: str) -> bool:
+    """
+    Return True only when a re-justification marker is asserted, not when
+    the evidence explicitly denies, lacks, or excludes that action.
+
+    The marker regex remains broad for recall; this sentence/word-window
+    guard prevents phrases such as "not re-approved" or "without
+    re-approval" from being mistaken for positive evidence.
+    """
+
+    if not isinstance(text, str) or not text.strip():
+        return False
+
+    for match in _REJUSTIFICATION_MARKERS.finditer(text):
+        preceding = text[max(0, match.start() - 120):match.start()]
+        words = re.findall(r"\b[\w']+\b", preceding.lower())
+
+        # Only inspect the local clause immediately preceding the marker.
+        # This catches common constructions without allowing a distant
+        # unrelated "not" to suppress a positive statement.
+        if any(word in _NEGATION_WORDS for word in words[-7:]):
+            continue
+
+        # "without re-approval" is also commonly written with the
+        # negation directly adjacent to the marker.
+        if re.search(r"\bwithout\s+(?:being\s+)?$", preceding, re.IGNORECASE):
+            continue
+
+        return True
+
+    return False
+
+
+def _equipment_entities(text: str) -> set[str]:
+    """Extract only equipment identifiers used for consistency checks."""
+    entities = extract_entities(text)
+    return {
+        entity
+        for entity in entities
+        if entity.startswith("px-") or entity.startswith("press")
+    }
+
+
+def _has_equipment_overlap(question_entities: set[str], evidence_entities: set[str]) -> bool:
+    """
+    Compare like-for-like equipment identifiers.
+
+    A Press identifier is compared with Press identifiers and a PX model
+    identifier with PX identifiers. We intentionally do not infer a
+    Press↔PX mapping here because that relationship is corpus-specific.
+    """
+    press_q = {e for e in question_entities if e.startswith("press")}
+    press_e = {e for e in evidence_entities if e.startswith("press")}
+    px_q = {e for e in question_entities if e.startswith("px-")}
+    px_e = {e for e in evidence_entities if e.startswith("px-")}
+
+    if press_q and press_e and press_q.intersection(press_e):
+        return True
+    if px_q and px_e and px_q.intersection(px_e):
+        return True
+
+    # If both sides expose a comparable equipment namespace but none match,
+    # they are inconsistent. If only one side exposes an identifier, do not
+    # assume a mismatch.
+    comparable_namespace_present = (press_q and press_e) or (px_q and px_e)
+    return not comparable_namespace_present
+
+
 # Administrative/commercial decision language.
 _ADMIN_DECISION_MARKERS = re.compile(
     r"\b("
@@ -131,18 +204,12 @@ _PERSISTENCE_MARKERS = re.compile(
 
 def _section_of(item: EvidenceItem) -> str:
     """
-    Return the known top-level corpus section from relative_path.
+    Return the top-level corpus section from relative_path.
 
-    The corpus may expose paths in different forms, for example:
-
+    Example:
         B_historical_engineering/10_Engineering_Note.txt
-        apex-corpus/B_historical_engineering/10_Engineering_Note.txt
-        data/apex-corpus/B_historical_engineering/10_Engineering_Note.txt
-
-    Therefore we search for a known section anywhere in the normalized path
-    instead of assuming it is always the first component.
+        -> B_historical_engineering
     """
-
     normalized = item.relative_path.replace("\\", "/")
 
     known_sections = (
@@ -214,17 +281,31 @@ class EvidenceGapAnalyzer:
             analysis,
         )
 
-        self._analyze_rejustification_gap(
-            investigation,
-            analysis,
-        )
+        # Re-justification analysis is only relevant when the user's
+        # question actually asks about a limit, parameter, current basis,
+        # technical justification, or continued support. It must not leak
+        # into ordinary factual questions such as "what equipment changed?"
+        if self._requires_technical_justification_analysis(investigation.question):
+            self._analyze_rejustification_gap(
+                investigation,
+                analysis,
+            )
 
-        self._analyze_administrative_decisions(
-            investigation,
-            analysis,
-        )
+        # Administrative-decision context is useful when the question asks
+        # about approval/rejection/decision history. Avoid injecting it into
+        # unrelated factual lookups.
+        if self._requires_decision_analysis(investigation.question):
+            self._analyze_administrative_decisions(
+                investigation,
+                analysis,
+            )
 
         self._analyze_distractor_only_coverage(
+            investigation,
+            analysis,
+        )
+
+        self._analyze_equipment_consistency(
             investigation,
             analysis,
         )
@@ -331,6 +412,45 @@ class EvidenceGapAnalyzer:
                 )
             )
 
+    @staticmethod
+    def _requires_technical_justification_analysis(question: str) -> bool:
+        q = " ".join(str(question or "").lower().split())
+        return any(term in q for term in (
+            "why",
+            "limit",
+            "threshold",
+            "parameter",
+            "setting",
+            "technical justification",
+            "technical basis",
+            "justification",
+            "rationale",
+            "revalidated",
+            "revalidation",
+            "re-validated",
+            "re-justif",
+            "re-derived",
+            "still supported",
+            "current technical",
+            "current limit",
+            "current parameter",
+            "original basis",
+        ))
+
+    @staticmethod
+    def _requires_decision_analysis(question: str) -> bool:
+        q = " ".join(str(question or "").lower().split())
+        return any(term in q for term in (
+            "approved",
+            "approval",
+            "rejected",
+            "reject",
+            "proposal",
+            "decision",
+            "why was",
+            "reason for",
+        ))
+
     def _analyze_rejustification_gap(
         self,
         investigation: Investigation,
@@ -367,7 +487,7 @@ class EvidenceGapAnalyzer:
             if _PERSISTENCE_MARKERS.search(content):
                 persistence_ids.append(item.chunk_id)
 
-            if _REJUSTIFICATION_MARKERS.search(content):
+            if _contains_explicit_rejustification(content):
                 rejustification_ids.append(item.chunk_id)
 
         # We need evidence that something changed before a "re-justification"
@@ -458,6 +578,50 @@ class EvidenceGapAnalyzer:
                         "establishes that conclusion."
                     ),
                     evidence_chunk_ids=administrative_only_ids,
+                )
+            )
+
+    def _analyze_equipment_consistency(
+        self,
+        investigation: Investigation,
+        analysis: EvidenceAnalysis,
+    ) -> None:
+        """
+        Flag retrieved chunks whose explicit equipment identifier conflicts
+        with the equipment identifier in the user's question.
+
+        This is a context/evidence-quality warning, not a hard retrieval
+        filter. Evidence without a comparable equipment identifier is left
+        untouched because the analyzer cannot safely infer an asset mismatch.
+        """
+
+        question_entities = _equipment_entities(investigation.question)
+        if not question_entities:
+            return
+
+        mismatched_ids: list[str] = []
+
+        for item in investigation.evidence:
+            evidence_entities = _equipment_entities(item.content)
+            if not evidence_entities:
+                continue
+
+            if not _has_equipment_overlap(question_entities, evidence_entities):
+                mismatched_ids.append(item.chunk_id)
+
+        if mismatched_ids:
+            analysis.add_finding(
+                EvidenceFinding(
+                    finding_type=FindingType.CONTEXT,
+                    statement=(
+                        "Some retrieved evidence contains equipment "
+                        "identifiers that do not match the equipment "
+                        "identified in the investigation question. Treat "
+                        "those chunks as potential distractors unless the "
+                        "records explicitly establish their relationship "
+                        "to the investigated equipment."
+                    ),
+                    evidence_chunk_ids=mismatched_ids,
                 )
             )
 
