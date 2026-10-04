@@ -12,8 +12,43 @@ ENTITY_PATTERNS = (
     re.compile(r"\bQM-\d{4}-\d+\b", re.IGNORECASE),
     re.compile(r"\bSPC-REV-\d{4}-\d+\b", re.IGNORECASE),
     re.compile(r"\bSOP-[A-Z0-9-]+\b", re.IGNORECASE),
-    re.compile(r"\b\d+(?:\.\d+)?\s*°?\s*[CF]\b", re.IGNORECASE),
+    # Temperature values. The corpus writes the degree unit three
+    # different ways for the same quantity: a bare letter ("42.3C"),
+    # the degree symbol ("42.3°C"), and the spelled-out word "deg"
+    # ("42.3 deg C"). All three are the same physical value and must
+    # resolve to the same canonical entity (see _canonicalize below).
+    re.compile(
+        r"\b\d+(?:\.\d+)?\s*(?:°\s*|deg(?:rees)?\.?\s*)?[CF]\b",
+        re.IGNORECASE,
+    ),
 )
+
+# Separators that are not semantically meaningful for entity identity:
+# "Press 7", "Press-07" and "Press07" name the same piece of equipment,
+# so whitespace and hyphens between an identifier's letters and its
+# number are collapsed away generically (not for any one identifier).
+_SEPARATORS = re.compile(r"[\s\-]+")
+
+# The degree symbol and the word "deg"/"degrees" are equivalent markers
+# for the same unit (the trailing C/F already carries the unit), so they
+# are collapsed away the same way a separator would be.
+_DEGREE_MARKER = re.compile(r"°|deg(?:rees)?\.?")
+
+# A leading zero in a numeric suffix is a formatting choice, not part of
+# the identifier's identity ("Press07" vs "Press7"): strip a zero that
+# both starts a run of digits (not preceded by another digit or a
+# decimal point) and is itself followed by another digit, so "07" -> "7"
+# but a genuine decimal such as "42.3" or "0.5" is left untouched.
+_LEADING_ZERO = re.compile(r"(?<![\d.])0+(?=\d)")
+
+
+def _canonicalize(raw_match: str) -> str:
+    """Collapse equivalent textual representations to one canonical form."""
+    text = raw_match.strip().lower()
+    text = _DEGREE_MARKER.sub("", text)
+    text = _SEPARATORS.sub("", text)
+    text = _LEADING_ZERO.sub("", text)
+    return text
 
 
 def extract_entities(text: str) -> set[str]:
@@ -21,8 +56,7 @@ def extract_entities(text: str) -> set[str]:
 
     for pattern in ENTITY_PATTERNS:
         for match in pattern.findall(text):
-            normalized = re.sub(r"\s+", "", match.lower())
-            entities.add(normalized)
+            entities.add(_canonicalize(match))
 
     return entities
 

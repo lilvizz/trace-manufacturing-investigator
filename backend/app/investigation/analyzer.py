@@ -119,7 +119,7 @@ def _equipment_entities(text: str) -> set[str]:
     return {
         entity
         for entity in entities
-        if entity.startswith("px-") or entity.startswith("press")
+        if entity.startswith("px") or entity.startswith("press")
     }
 
 
@@ -133,8 +133,8 @@ def _has_equipment_overlap(question_entities: set[str], evidence_entities: set[s
     """
     press_q = {e for e in question_entities if e.startswith("press")}
     press_e = {e for e in evidence_entities if e.startswith("press")}
-    px_q = {e for e in question_entities if e.startswith("px-")}
-    px_e = {e for e in evidence_entities if e.startswith("px-")}
+    px_q = {e for e in question_entities if e.startswith("px")}
+    px_e = {e for e in evidence_entities if e.startswith("px")}
 
     if press_q and press_e and press_q.intersection(press_e):
         return True

@@ -1,7 +1,23 @@
 # Runtime dependencies for the TRACE backend (ingestion, chunking,
-# embeddings, retrieval). Pinned to compatible major versions for
+# embeddings, retrieval, UI). Pinned to compatible major versions for
 # reproducible installs.
 
 google-genai>=2.20.0,<3.0.0
 python-dotenv>=1.0.0,<2.0.0
 scikit-learn>=1.5.0,<2.0.0
+
+# BM25 keyword search (app/retrieval/bm25_search.py imports BM25Okapi
+# from this package). It was previously missing from this file even
+# though the backend imports it directly at runtime.
+rank_bm25>=0.2.2,<0.3.0
+
+# Numeric array support used by the retrieval stack (a transitive
+# dependency of rank_bm25/scikit-learn that is exercised at runtime,
+# not only an indirect install artifact). Pinned explicitly for
+# reproducible installs.
+numpy>=1.26.0,<3.0.0
+
+# Streamlit UI (app/ui.py imports streamlit directly). The application
+# cannot launch without it, but it was previously missing from this
+# file.
+streamlit>=1.30.0,<2.0.0
