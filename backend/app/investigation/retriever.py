@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -76,12 +77,34 @@ class InvestigationRetriever:
         plan: InvestigationPlan,
     ) -> Investigation:
 
-        for subquestion in plan.subquestions:
-            results = self.retriever.search(
-                subquestion,
-                top_k=self.top_k_per_subquestion,
+        subquestions = list(plan.subquestions)
+
+        # Each subquestion's retrieval (BM25 + vector-embedding network
+        # call + entity match + RRF fusion, inside self.retriever.search)
+        # is independent of every other subquestion's retrieval: none of
+        # them read or write any shared mutable state, and the query
+        # text/top_k passed to each is unchanged from before. Only this
+        # I/O-bound fan-out runs concurrently; executor.map preserves the
+        # input order, so `all_results[i]` is still exactly the result
+        # for `subquestions[i]`.
+        with ThreadPoolExecutor(
+            max_workers=max(1, len(subquestions))
+        ) as executor:
+            all_results = list(
+                executor.map(
+                    lambda subquestion: self.retriever.search(
+                        subquestion,
+                        top_k=self.top_k_per_subquestion,
+                    ),
+                    subquestions,
+                )
             )
 
+        # Diversification, EvidenceItem construction, and merging into
+        # `investigation` are applied sequentially, in the same original
+        # subquestion order as before, so evidence ordering and the
+        # single-threaded mutation of `investigation` are unchanged.
+        for subquestion, results in zip(subquestions, all_results):
             diversified_results = diversify_results(
                 results,
                 max_per_document=self.max_per_subquestion_document,

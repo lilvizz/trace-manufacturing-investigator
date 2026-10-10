@@ -58,6 +58,14 @@ class Investigator:
         )
 
     def run(self, question: str) -> InvestigationResult:
+        """
+        Run the investigation pipeline.
+
+        This is the pipeline's plain, synchronous call -- no progress
+        callback. Any UI progress indication is handled entirely on the
+        frontend, outside of this call, so that this method's runtime is
+        just the sum of the real pipeline work below.
+        """
         if not isinstance(question, str) or not question.strip():
             raise ValueError("question cannot be empty")
 

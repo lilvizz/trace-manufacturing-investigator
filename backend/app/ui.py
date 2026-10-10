@@ -37,6 +37,7 @@ from app.ingestion.chunker import chunk_corpus  # noqa: E402
 from app.ingestion.loader import load_corpus  # noqa: E402
 from app.investigation.build import build_investigator  # noqa: E402
 from app.investigation.models import ClaimType, EvidenceStance  # noqa: E402
+from app.investigation.planner import InvestigationPlanner  # noqa: E402
 from app.investigation.scenarios import get_scenarios  # noqa: E402
 from app.retrieval.bm25_search import BM25Searcher  # noqa: E402
 from app.retrieval.entity_matcher import EntityMatcher  # noqa: E402
@@ -100,6 +101,14 @@ def inject_css() -> None:
             --trace-amber: #e7ad58;
             --trace-red: #e36d6d;
             --trace-purple: #a78bfa;
+        }
+
+        /* Prevents a white flash on first paint: the browser renders the
+           raw <html>/<body> before Streamlit's React tree mounts the
+           .stApp div below, so without this the default (white) page
+           background is briefly visible on a cold load or hard refresh. */
+        html, body {
+            background: var(--trace-bg);
         }
 
         .stApp {
@@ -329,12 +338,12 @@ def inject_css() -> None:
         }
 
         .confidence {
-            min-width: 106px;
+            min-width: 120px;
             text-align: right;
         }
 
         .confidence-number {
-            font-size: 25px;
+            font-size: 22px;
             font-weight: 730;
             color: #dce7f2;
         }
@@ -1014,6 +1023,151 @@ def _badge(label: str, tone: str) -> str:
     return f'<span class="badge {tone}">{_escape(label)}</span>'
 
 
+def _confidence_level(confidence: float) -> str:
+    """
+    Map a calibrated confidence score to a qualitative label, for the
+    top-level hero display ONLY.
+
+    This performs no recalculation of confidence and does not alter the
+    `confidence` value itself -- it only chooses which of three fixed
+    words to display in place of the raw percentage next to the headline
+    assessment. The raw percentage is still shown everywhere else in the
+    UI (each individual claim's confidence, and the "What the confidence
+    applies to" explanation), unchanged. This exists purely to avoid the
+    optical contradiction of a high top-level number sitting next to a
+    low individual-claim percentage on first skim -- it changes nothing
+    about what was actually calibrated.
+    """
+    if confidence >= 0.85:
+        return "High confidence"
+    if confidence >= 0.60:
+        return "Moderate confidence"
+    return "Low confidence"
+
+
+def _evidence_strength(confidence: float) -> str:
+    """
+    Map a calibrated confidence score to a plain evidence-sufficiency
+    word, for the top-level hero display ONLY. Reuses `_confidence_level`'s
+    thresholds (no new calibration, no recalculation) but deliberately
+    uses different wording for a different question.
+
+    `_confidence_level` (still used/tested on its own, unchanged above)
+    answers "how confident is TRACE in this specific stated assessment"
+    -- a percentage-flavored framing that a judge skimming several
+    different claims' percentages can misread as "there is a 30% chance
+    this conclusion is correct", when NOT_ESTABLISHED actually means
+    "the evidence needed to establish this was not found", a yes/no
+    finding, not a probability. "Evidence strength: Insufficient" asks
+    the second question directly and cannot be misread as the first.
+
+    The raw percentage remains fully visible elsewhere -- every
+    individual claim's confidence (render_claims) and the "What the
+    confidence applies to" explanation (render_confidence_context) are
+    both untouched by this function or its use in the hero.
+    """
+    if confidence >= 0.85:
+        return "Strong"
+    if confidence >= 0.60:
+        return "Moderate"
+    return "Insufficient"
+
+
+# Explicit phrasings that mean the question is specifically asking whether
+# the CURRENT technical basis for a parameter/limit is established or
+# re-justified -- not merely a question that happens to mention a
+# technical change or event in passing (e.g. "...after the PX-400
+# replacement..." is an equipment/administrative reference, not this).
+# Phrasings that unambiguously mean the question is about the CURRENT
+# (post-replacement) technical basis, regardless of whether the question
+# also mentions "original"/"established" in passing (the hero question
+# does exactly this: "...what changed since that limit was established,
+# and is its current technical basis still supported?"). These always
+# win, because there is no legitimate "original basis" reading of them.
+_CURRENT_JUSTIFICATION_STRONG_TRIGGERS = (
+    "current technical basis",
+    "currently justified",
+    "currently supported",
+    "still supported",
+    "still justified",
+    "still valid",
+    "re-justification",
+    "re justification",
+    "rejustification",
+    "re-justified",
+    "rejustified",
+    "revalidation",
+    "re-validation",
+    "revalidated",
+    "re-validated",
+    "re-derivation",
+    "re derivation",
+    "rederivation",
+    "re-derived",
+    "rederived",
+    "after the px-400",
+    "after px-400",
+    "px-400 replacement",
+    "after replacement",
+    "technically supported",
+    "technically valid",
+)
+
+# Phrasings that are ambiguous on their own: "technical basis" or
+# "technical justification" can equally describe the ORIGINAL 2001
+# derivation ("what was the original technical basis for setting the
+# UCL...") or the CURRENT re-justification question. These only count
+# as a current-justification signal when no original-basis marker (see
+# _ORIGINAL_BASIS_MARKERS) is also present in the question.
+_TECHNICAL_JUSTIFICATION_WEAK_TRIGGERS = (
+    "technical justification",
+    "technically justified",
+    "technical rationale",
+    "technical basis",
+)
+
+# "original"/"originally" already doubles as a scoring term for
+# ORIGINAL_BASIS below; reusing it here (rather than inventing a new,
+# separate marker set) keeps the "is this question about the original
+# derivation" check consistent with the rest of this function.
+_ORIGINAL_BASIS_MARKERS = ("original", "originally")
+
+
+def _question_targets_original_basis(question: str) -> bool:
+    """True when the question explicitly asks about the ORIGINAL basis/
+    derivation/establishment of a limit (e.g. "...in 2001"), as opposed
+    to its current re-justification."""
+    return any(marker in question for marker in _ORIGINAL_BASIS_MARKERS)
+
+
+def _question_targets_technical_justification(question: str) -> bool:
+    """
+    True when the question explicitly targets the CURRENT technical
+    basis/re-justification -- a narrow, explicit phrase match, not a
+    scoring signal. It exists so that an unambiguous "is the current
+    technical basis established?" question always wins the
+    primary-claim slot, instead of being out-scored by an unrelated but
+    higher-confidence claim whose keyword terms happen to also appear in
+    the question's wording (the original bug: "replacement" matching
+    ADMINISTRATIVE_ACTION's terms even though the question was really
+    asking about current technical justification).
+
+    A strong trigger (see _CURRENT_JUSTIFICATION_STRONG_TRIGGERS) always
+    wins. A weak/ambiguous trigger (bare "technical basis" or "technical
+    justification") only counts when the question does NOT also contain
+    an original-basis marker -- otherwise "what was the ORIGINAL
+    technical basis ... in 2001?" would incorrectly be forced onto the
+    CURRENT_TECHNICAL_JUSTIFICATION claim (the bug this fixes).
+    """
+    if any(trigger in question for trigger in _CURRENT_JUSTIFICATION_STRONG_TRIGGERS):
+        return True
+
+    if any(trigger in question for trigger in _TECHNICAL_JUSTIFICATION_WEAK_TRIGGERS):
+        return not _question_targets_original_basis(question)
+
+    return False
+
+
 def _primary_claim(result):
     """Choose the assessment claim that best matches the user's question."""
     claims = list(getattr(result.report, "claims", []) or [])
@@ -1021,6 +1175,41 @@ def _primary_claim(result):
         return None
 
     question = getattr(result.investigation, "question", "").lower()
+
+    # An explicit technical-justification question must win outright,
+    # before any scoring: the keyword-overlap scoring below can otherwise
+    # be tipped toward an unrelated but higher-confidence claim. This
+    # only fires on an explicit phrase match (see
+    # _question_targets_technical_justification); any other question
+    # (asking about original basis, equipment/capability, or an
+    # administrative decision) falls through to the unchanged scoring
+    # below exactly as before.
+    if _question_targets_technical_justification(question):
+        technical_claim = next(
+            (
+                claim for claim in claims
+                if claim.claim_type == ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+            ),
+            None,
+        )
+        if technical_claim is not None:
+            return technical_claim
+
+    # Symmetrically, an explicit original-basis question (e.g. "what was
+    # the original technical basis ... in 2001?") must win outright onto
+    # ORIGINAL_BASIS, for the same reason: without this, "basis" and
+    # "original" scoring terms can still be out-weighed by an unrelated
+    # higher-confidence claim below.
+    elif _question_targets_original_basis(question):
+        original_claim = next(
+            (
+                claim for claim in claims
+                if claim.claim_type == ClaimType.ORIGINAL_BASIS
+            ),
+            None,
+        )
+        if original_claim is not None:
+            return original_claim
 
     # Prefer the claim type that directly answers the question rather than
     # always prioritizing current technical justification.
@@ -1043,7 +1232,15 @@ def _primary_claim(result):
             "current technical basis", "prove the limit", "does that prove",
         ),
         ClaimType.EVIDENCE_GAP: (
-            "evidence gap", "missing evidence", "what evidence", "evidence",
+            # Deliberately excludes the bare word "evidence": this is an
+            # evidence-investigation tool, so "evidence" appears in nearly
+            # every question (e.g. "does the evidence establish..."). As a
+            # bare keyword it was a near-universal false-positive match that
+            # could outscore every real-answer claim's confidence and hijack
+            # the hero onto an unrelated, low-confidence gap finding. Only
+            # phrases that actually signal the question is about a gap or
+            # missing evidence should count.
+            "evidence gap", "missing evidence", "what evidence",
         ),
         ClaimType.RECOMMENDATION: (
             "recommend", "should we", "what should", "action",
@@ -1245,8 +1442,18 @@ def scroll_to_question(nonce: int) -> None:
     """Scroll the parent Streamlit page to the investigation question."""
     components.html(
         f"""
+        <!-- scroll-nonce:{nonce} -->
         <script>
         (() => {{
+            // Embedding the nonce (as both a comment above and a variable
+            // here) makes this component's HTML content unique per call.
+            // components.html() renders an iframe whose embedded <script>
+            // only (re)executes when the iframe's srcdoc content actually
+            // changes between Streamlit reruns; without this, every call
+            // emitted byte-identical markup and only the very first call
+            // (the first time this iframe element existed at all) ever
+            // ran the scroll/focus script.
+            const scrollNonce = {nonce};
             const scroll = () => {{
                 const parentDoc = window.parent.document;
                 const target = parentDoc.querySelector(
@@ -1354,6 +1561,7 @@ def render_empty_state() -> None:
 
 def render_assessment(result) -> None:
     label, statement, tone, confidence, requires_human = _assessment(result)
+    evidence_strength = _evidence_strength(confidence)
 
     st.markdown(
         f"""
@@ -1367,8 +1575,8 @@ def render_assessment(result) -> None:
                     </div>
                 </div>
                 <div class="confidence">
-                    <div class="confidence-number">{confidence:.0%}</div>
-                    <div class="confidence-label">calibrated confidence</div>
+                    <div class="confidence-number">{_escape(evidence_strength)}</div>
+                    <div class="confidence-label">evidence strength</div>
                 </div>
             </div>
             {
@@ -1792,6 +2000,7 @@ def render_result_header(result, meta) -> None:
 
 def render_confidence_context(result) -> None:
     label, statement, tone, confidence, requires_human = _assessment(result)
+    evidence_strength = _evidence_strength(confidence)
     claims = list(getattr(result.report, "claims", []) or [])
     high_conf = sum(
         1 for claim in claims
@@ -1805,10 +2014,10 @@ def render_confidence_context(result) -> None:
                     What the confidence applies to
                 </div>
                 <div class="confidence-context-copy">
-                    The {confidence:.0%} score applies to the <strong>stated assessment</strong>,
-                    not to every fact TRACE found. TRACE can have high-confidence historical
-                    evidence while still having low confidence that the current technical
-                    justification is established.
+                    The <strong>{_escape(evidence_strength)}</strong> evidence-strength rating
+                    applies to the <strong>stated assessment</strong>, not to every fact TRACE
+                    found. TRACE can have high-confidence historical evidence while still having
+                    low confidence that the current technical justification is established.
                 </div>
             </div>
             <div class="confidence-context-stat">
@@ -1936,10 +2145,59 @@ def _is_simple_factual_question(question: str) -> bool:
     return q.startswith(simple_starts) and not any(term in q for term in complex_terms)
 
 
+def _render_investigation_coverage(result) -> None:
+    """
+    "Investigation coverage" metrics card (questions / evidence items /
+    timeline events) plus its deterministic-calibration note. Shared by
+    both render_result (the full case UI) and render_simple_result (the
+    compact factual-lookup UI), so both paths show the same coverage
+    metrics -- this card must not disappear just because a question was
+    classified as a "simple" factual lookup.
+    """
+    st.markdown(
+        '<div class="result-card"><div class="section-label">Investigation coverage</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"""
+        <div class="metric-row">
+            <div class="metric">
+                <div class="metric-value">{len(result.plan.subquestions)}</div>
+                <div class="metric-label">questions</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">{len(result.investigation.evidence)}</div>
+                <div class="metric-label">evidence items</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value">{len(result.timeline.events)}</div>
+                <div class="metric-label">timeline events</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="small-muted" style="margin-top:10px;">'
+        "Claims are post-hoc verified against retrieved evidence. "
+        "Confidence is deterministically calibrated."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def render_simple_result(result, meta) -> None:
     """Compact result view for narrow factual questions."""
     render_direct_answer(result)
     render_assessment(result)
+
+    # Restored: Investigation coverage and the Claim Breakdown must be
+    # visible regardless of assessment type (sufficient/insufficient) or
+    # question classification -- these are investigation metrics, not
+    # part of the "simple vs full case" presentation choice.
+    _render_investigation_coverage(result)
+    render_claims(result)
 
     # Keep only a small amount of supporting provenance for a factual lookup.
     st.markdown(
@@ -1995,37 +2253,7 @@ def render_result(result, meta) -> None:
     with c1:
         render_finding_summary(result)
     with c2:
-        st.markdown(
-            '<div class="result-card"><div class="section-label">Investigation coverage</div>',
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            f"""
-            <div class="metric-row">
-                <div class="metric">
-                    <div class="metric-value">{len(result.plan.subquestions)}</div>
-                    <div class="metric-label">questions</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">{len(result.investigation.evidence)}</div>
-                    <div class="metric-label">evidence items</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-value">{len(result.timeline.events)}</div>
-                    <div class="metric-label">timeline events</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.markdown(
-            '<div class="small-muted" style="margin-top:10px;">'
-            "Claims are post-hoc verified against retrieved evidence. "
-            "Confidence is deterministically calibrated."
-            "</div>",
-            unsafe_allow_html=True,
-        )
-        st.markdown("</div>", unsafe_allow_html=True)
+        _render_investigation_coverage(result)
 
     render_investigation_path(result)
 
@@ -2038,6 +2266,121 @@ def render_result(result, meta) -> None:
     render_evidence(result)
     render_claims(result)
 
+# ---------------------------------------------------------------------------
+# Live investigation progress (frontend-only animation)
+# ---------------------------------------------------------------------------
+
+# Cosmetic, client-side stage sentences, in the pipeline's real stage order
+# (see app/investigation/investigator.py). There is no backend progress
+# callback: Investigator.run() is a plain, synchronous call, and nothing
+# here communicates with it while it is running. The deep-path sequence is
+# used when the question will take the Gemini-planned path; the narrow-path
+# sequence is used when it is routed to the deterministic planner instead
+# (no Gemini call for planning), decided once, up front, via the planner's
+# own routing check -- not duplicated logic, not a backend event.
+_PROGRESS_SENTENCES_DEEP = (
+    "Planning investigation…",
+    "Searching & fusing evidence…",
+    "Reconstructing timeline…",
+    "Analyzing evidence gaps…",
+    "Reasoning over evidence…",
+    "Verifying claims…",
+    "Calibrating confidence…",
+)
+
+_PROGRESS_SENTENCES_NARROW = (
+    "Routing question…",
+    "Searching relevant evidence…",
+    "Reconstructing timeline…",
+    "Analyzing evidence gaps…",
+    "Reasoning over evidence…",
+    "Verifying claims…",
+    "Calibrating confidence…",
+)
+
+
+def _render_progress_animation(placeholder, question: str) -> None:
+    """
+    Render a single loading card ONCE, before Investigator.run() is
+    called. The pulsing dot and the sentence cycling are plain CSS/JS
+    running inside the iframe that components.html() creates -- once
+    rendered, nothing here calls back into Python or Streamlit again
+    until the placeholder is cleared after run() returns. The browser
+    animates on its own while Python sits blocked inside run().
+
+    This intentionally trades exact backend-stage synchronization (the
+    previous progress_callback design, which added real wall-clock
+    overhead by calling back into Streamlit rendering during the
+    pipeline) for zero added runtime. The sentences are the pipeline's
+    real stage descriptions, shown as a truthful best-effort visual
+    sequence, not backend-verified timing -- they may not land on the
+    exact instant each stage actually starts.
+    """
+    is_narrow = InvestigationPlanner._is_narrow_question(question)
+    sentences = (
+        _PROGRESS_SENTENCES_NARROW if is_narrow else _PROGRESS_SENTENCES_DEEP
+    )
+    sentences_json = json.dumps(sentences)
+    first_sentence = _escape(sentences[0])
+
+    html = f"""
+    <div class="progress-tracker">
+      <div class="progress-sentence">
+        <span class="progress-dot">●</span>
+        <span class="progress-text" id="progress-text">{first_sentence}</span>
+      </div>
+    </div>
+    <style>
+      html, body {{ margin: 0; background: transparent; }}
+      .progress-tracker {{
+        border: 1px solid #2b3948;
+        background: linear-gradient(145deg, rgba(18,25,35,.96), rgba(11,15,21,.96));
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 18px 50px rgba(0,0,0,.20);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        box-sizing: border-box;
+      }}
+      .progress-sentence {{
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }}
+      .progress-dot {{
+        flex: 0 0 auto;
+        color: #69d6e7;
+        font-size: 13px;
+        line-height: 1;
+        animation: progress-pulse 1.4s ease-in-out infinite;
+      }}
+      .progress-text {{
+        color: #f2f5f8;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+      }}
+      @keyframes progress-pulse {{
+        0%, 100% {{ opacity: 1; }}
+        50% {{ opacity: .35; }}
+      }}
+    </style>
+    <script>
+      (function () {{
+        var sentences = {sentences_json};
+        var el = document.getElementById("progress-text");
+        var i = 0;
+        setInterval(function () {{
+          i = (i + 1) % sentences.length;
+          el.textContent = sentences[i];
+        }}, 2600);
+      }})();
+    </script>
+    """
+
+    with placeholder:
+        components.html(html, height=74)
+
+
 def main() -> None:
     st.set_page_config(
         page_title="TRACE — Manufacturing Evidence Investigator",
@@ -2048,12 +2391,22 @@ def main() -> None:
 
     inject_css()
 
-    previous = st.session_state.get("result")
-    _render_sidebar(previous)
-
+    # render_header()/render_question_input() render the primary,
+    # above-the-fold content and have no dependency on _render_sidebar()
+    # (it only reads st.session_state["result"], passed in explicitly as
+    # `previous`, and only writes session-state keys on an explicit
+    # button click, which triggers st.rerun() immediately). _render_sidebar
+    # is called after them so the cold-start load_pipeline() call it makes
+    # for the sidebar's system-status panel (spinner-less, and on a cold
+    # cache noticeably slow: corpus load, chunking, BM25 index, optional
+    # vector index) no longer blocks the header/input/case-cards from
+    # streaming to the browser first.
     render_header()
 
     question = render_question_input()
+
+    previous = st.session_state.get("result")
+    _render_sidebar(previous)
 
     if question and question != st.session_state.get("executed_question"):
         try:
@@ -2064,23 +2417,18 @@ def main() -> None:
             st.session_state["investigating"] = True
             st.session_state["active_question"] = question
 
-            status = st.status(
-                "TRACE is investigating…",
-                expanded=True,
+            st.markdown(
+                '<div class="question-label">Investigation in progress</div>',
+                unsafe_allow_html=True,
             )
-            status.write(
-                "Planning the investigation, retrieving evidence, reconstructing "
-                "the timeline, and generating the verified conclusion."
-            )
+            progress_placeholder = st.empty()
+            _render_progress_animation(progress_placeholder, question)
+
             investigator, meta = load_pipeline()
 
             result = investigator.run(question)
 
-            status.update(
-                label="Investigation complete",
-                state="complete",
-                expanded=False,
-            )
+            progress_placeholder.empty()
 
             st.session_state["result"] = result
             st.session_state["executed_question"] = question
