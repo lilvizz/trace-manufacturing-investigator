@@ -91,6 +91,548 @@ def test_render_direct_answer_does_nothing_when_answer_is_empty(monkeypatch):
     assert rendered == []
 
 
+# ---------------------------------------------------------------------------
+# Regression tests: _primary_claim question-specific selection
+# ---------------------------------------------------------------------------
+#
+# Bug: a question that explicitly asks about the CURRENT technical
+# justification of a parameter/limit (e.g. "...the exact technical
+# justification for keeping the Press-07 UCL at 42.3°C after the PX-400
+# replacement in 2011?") was selecting an unrelated ADMINISTRATIVE_ACTION
+# claim as the primary assessment, because the word "replacement" in the
+# question happened to match that claim type's keyword list and that
+# claim also had a higher raw confidence. The fix only changes claim
+# *selection*; no confidence value is read, written, or recalculated.
+
+
+def _claim(claim_type, confidence, statement="statement"):
+    return SimpleNamespace(
+        claim_type=claim_type,
+        confidence=confidence,
+        statement=statement,
+    )
+
+
+def test_primary_claim_technical_justification_question_wins_despite_lower_confidence():
+    question = (
+        "What was the exact technical justification for keeping the "
+        "Press-07 UCL at 42.3°C after the PX-400 replacement in 2011?"
+    )
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.90, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+    assert chosen.confidence == 0.30
+
+
+def test_primary_claim_original_basis_question_prefers_original_basis():
+    question = "What originally established the 42.3°C boundary for Press-07?"
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.90, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.ORIGINAL_BASIS
+
+
+def test_primary_claim_administrative_question_prefers_administrative_action():
+    question = "Why was the 43.0°C proposal rejected?"
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.90, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.ADMINISTRATIVE_ACTION
+
+
+def test_primary_claim_equipment_question_prefers_current_capability():
+    question = "What equipment changed on Press-07 since 2011?"
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.CURRENT_CAPABILITY, 0.90, "capability"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.CURRENT_CAPABILITY
+
+
+def test_primary_claim_no_semantic_target_keeps_existing_scoring_behavior():
+    """With no keyword/trigger overlap at all, score reduces to raw
+    confidence, so the highest-confidence claim wins -- exactly the
+    pre-existing fallback behavior, untouched by this change."""
+    question = "Tell me about Press-07."
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.90, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.ADMINISTRATIVE_ACTION
+    assert chosen.confidence == 0.95
+
+
+def test_primary_claim_original_technical_basis_question_prefers_original_basis():
+    """Bug: 'What was the original technical basis for setting the
+    Press-07 UCL at 42.3°C in 2001?' was being forced onto
+    CURRENT_TECHNICAL_JUSTIFICATION because bare 'technical basis' is an
+    ambiguous trigger. The question explicitly says "original" / is
+    asking about the 2001 derivation, so ORIGINAL_BASIS must win, even
+    though CURRENT_TECHNICAL_JUSTIFICATION's own keyword-scoring terms
+    don't even match this question's wording."""
+    question = (
+        "What was the original technical basis for setting the "
+        "Press-07 UCL at 42.3°C in 2001?"
+    )
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.95, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.ORIGINAL_BASIS
+    assert chosen.confidence == 0.95
+
+
+def test_primary_claim_current_justification_hero_question_still_wins():
+    """Regression guard for the hero question, which contains BOTH an
+    original-basis-ish word ("established") and strong current-
+    justification markers ("current technical basis", "still
+    supported") -- the strong markers must still force
+    CURRENT_TECHNICAL_JUSTIFICATION, exactly as before this fix."""
+    question = (
+        "Why is Press-07 limited to 42.3°C, what changed since that "
+        "limit was established, and is its current technical basis "
+        "still supported?"
+    )
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.95, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+    assert chosen.confidence == 0.30
+
+
+def test_primary_claim_current_justification_after_replacement_still_wins():
+    """Regression guard for the earlier bug fix: a question mentioning
+    'replacement' (an ADMINISTRATIVE_ACTION keyword) in the context of
+    asking about the technical justification after that replacement
+    must still select CURRENT_TECHNICAL_JUSTIFICATION, not be re-broken
+    by the original-basis carve-out added in this round."""
+    question = (
+        "What was the exact technical justification for keeping the "
+        "Press-07 UCL at 42.3°C after the PX-400 replacement in 2011?"
+    )
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.90, "original"),
+        _claim(ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION, 0.30, "technical"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+    assert chosen.confidence == 0.30
+
+
+def test_primary_claim_does_not_hijack_on_bare_evidence_keyword():
+    """Bug: 'Does the evidence establish that RTD-7714-2 failed
+    calibration, and what impact does that have on measurement
+    reliability and the required response?' was selecting a 0%-confidence
+    EVIDENCE_GAP claim (about unrelated pre-failure batch records) as the
+    hero assessment, making the UI show 'INCONCLUSIVE / Insufficient'
+    directly under a Direct Answer that confidently says the opposite.
+    Root cause: EVIDENCE_GAP's keyword list included the bare word
+    'evidence', which matches almost every question in an evidence-
+    investigation tool, regardless of relevance. The fix removes that
+    bare keyword, keeping only phrases that actually signal a
+    missing-evidence question ('evidence gap', 'missing evidence',
+    'what evidence'). This claim set and question are taken verbatim
+    from the reported case."""
+    question = (
+        "Does the evidence establish that RTD-7714-2 failed calibration, "
+        "and what impact does that have on measurement reliability and "
+        "the required response?"
+    )
+    calibration_failure = _claim(
+        ui.ClaimType.ORIGINAL_BASIS,
+        0.95,
+        "RTD-7714-2 failed annual calibration on September 12, 2018, with "
+        "an as-found deviation of 0.31 °C against the 0.30 °C "
+        "acceptance threshold.",
+    )
+    procedure_requirement = _claim(
+        ui.ClaimType.ORIGINAL_BASIS,
+        0.95,
+        "Metrology Procedure MET-PROC-004 mandates an as-found deviation "
+        "limit of <= 0.30 °C for process temperature sensors.",
+    )
+    drift_history = _claim(
+        ui.ClaimType.CURRENT_CAPABILITY,
+        0.95,
+        "RTD-7714-2 exhibited a history of progressive thermal drift from "
+        "2012 through 2017 prior to failing in 2018.",
+    )
+    replacement_action = _claim(
+        ui.ClaimType.ADMINISTRATIVE_ACTION,
+        0.95,
+        "Work Order WO-18-0322 executed a like-for-like replacement of "
+        "RTD-7714-2 with a new sensor, recording an as-left deviation of "
+        "0.01 °C.",
+    )
+    post_replacement_quality = _claim(
+        ui.ClaimType.CURRENT_CAPABILITY,
+        0.90,
+        "Three production batches run post-replacement were verified to "
+        "be within normal quality parameters.",
+    )
+    pre_failure_gap = _claim(
+        ui.ClaimType.EVIDENCE_GAP,
+        0.0,
+        "Individual batch quality records and retrospective impact "
+        "assessments for product manufactured immediately prior to the "
+        "September 12, 2018 calibration failure are not established in "
+        "the available evidence.",
+    )
+    claims = [
+        calibration_failure,
+        procedure_requirement,
+        drift_history,
+        replacement_action,
+        post_replacement_quality,
+        pre_failure_gap,
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    # The headline must select the calibration-failure finding, not the
+    # unrelated evidence-gap claim.
+    assert chosen.claim_type != ui.ClaimType.EVIDENCE_GAP
+    assert chosen is calibration_failure
+    assert chosen.confidence == 0.95
+
+    # The pre-detection product-impact gap must still be present in the
+    # full claim list -- this fix only changes which claim is selected as
+    # the hero, not what claims exist or their confidence values.
+    assert pre_failure_gap in claims
+    assert pre_failure_gap.claim_type == ui.ClaimType.EVIDENCE_GAP
+    assert pre_failure_gap.confidence == 0.0
+
+
+def test_primary_claim_current_justification_question_unaffected_by_evidence_gap_fix():
+    """Confirms the Press-07 current-technical-justification question
+    (the one that SHOULD show NOT_ESTABLISHED) still correctly selects
+    CURRENT_TECHNICAL_JUSTIFICATION after the EVIDENCE_GAP keyword change
+    above -- that fix only touches the generic keyword-scoring fallback,
+    not the strong-trigger override this question relies on."""
+    question = (
+        "Why is Press-07 limited to 42.3°C, what changed since that "
+        "limit was established, and is its current technical basis "
+        "still supported?"
+    )
+    claims = [
+        _claim(ui.ClaimType.ADMINISTRATIVE_ACTION, 0.95, "administrative"),
+        _claim(ui.ClaimType.ORIGINAL_BASIS, 0.95, "original"),
+        _claim(
+            ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION,
+            0.30,
+            "The available evidence does not establish the current "
+            "technical basis for the parameter or limit on the current "
+            "equipment configuration.",
+        ),
+        _claim(ui.ClaimType.EVIDENCE_GAP, 0.85, "evidence gap claim"),
+    ]
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=claims),
+        investigation=SimpleNamespace(question=question),
+    )
+
+    chosen = ui._primary_claim(result)
+
+    assert chosen.claim_type == ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION
+    assert chosen.confidence == 0.30
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: render_simple_result keeps Investigation coverage
+# and Claim Breakdown visible
+# ---------------------------------------------------------------------------
+#
+# Bug: a narrow factual question (e.g. the original-technical-basis
+# question above) is classified by _is_simple_factual_question() and
+# routed to render_simple_result(), which only rendered Direct Answer,
+# Current Assessment, and Supporting Evidence -- silently dropping the
+# Investigation Coverage metrics and Claim Breakdown that the full case
+# UI (render_result) shows. These are investigation metrics, not part
+# of the simple/full presentation choice, so they must appear in both.
+
+
+def _fake_simple_result():
+    claim = SimpleNamespace(
+        claim_type=ui.ClaimType.ORIGINAL_BASIS,
+        confidence=0.95,
+        statement="The 42.3°C limit was established in 2001.",
+        stance=ui.EvidenceStance.SUPPORTS,
+        evidence_chunk_ids=["chunk-2001"],
+    )
+    return SimpleNamespace(
+        report=SimpleNamespace(
+            claims=[claim],
+            direct_answer="",
+            direct_answer_evidence_chunk_ids=[],
+            unresolved_questions=[],
+        ),
+        plan=SimpleNamespace(subquestions=["q1", "q2"]),
+        investigation=SimpleNamespace(
+            evidence=[],
+            question="What was the original technical basis in 2001?",
+        ),
+        timeline=SimpleNamespace(events=[]),
+        evidence_analysis=SimpleNamespace(findings=[]),
+    )
+
+
+def test_render_simple_result_includes_investigation_coverage_and_claims(monkeypatch):
+    result = _fake_simple_result()
+    rendered = []
+
+    monkeypatch.setattr(
+        ui.st,
+        "markdown",
+        lambda content, **kwargs: rendered.append(content),
+    )
+
+    ui.render_simple_result(result, {})
+
+    combined = "".join(rendered)
+    assert "Investigation coverage" in combined
+    assert "Reasoning claims" in combined or "claims" in combined.lower()
+    assert "Supporting evidence" in combined
+
+
+# ---------------------------------------------------------------------------
+# Regression tests: hero assessment confidence presentation
+# ---------------------------------------------------------------------------
+#
+# The top-level "Current assessment" hero previously showed a raw
+# percentage (e.g. "95%") directly beside the stance badge (e.g.
+# "NO ESCALATION"). When a different, lower-confidence claim (e.g.
+# "NOT ESTABLISHED — 30%") appeared further down the same page, the two
+# numbers next to two different stances read as contradictory on a first
+# skim, even though they are both correct and independently calibrated.
+# The fix is presentation-only: the hero shows a qualitative label
+# instead of a number; every individual claim's own percentage (rendered
+# by render_claims, untouched here) is unaffected.
+
+
+def test_confidence_level_buckets_high_moderate_low():
+    assert ui._confidence_level(0.95) == "High confidence"
+    assert ui._confidence_level(0.85) == "High confidence"
+    assert ui._confidence_level(0.84) == "Moderate confidence"
+    assert ui._confidence_level(0.60) == "Moderate confidence"
+    assert ui._confidence_level(0.59) == "Low confidence"
+    assert ui._confidence_level(0.30) == "Low confidence"
+    assert ui._confidence_level(0.0) == "Low confidence"
+
+
+def test_evidence_strength_buckets_strong_moderate_insufficient():
+    assert ui._evidence_strength(0.95) == "Strong"
+    assert ui._evidence_strength(0.85) == "Strong"
+    assert ui._evidence_strength(0.84) == "Moderate"
+    assert ui._evidence_strength(0.60) == "Moderate"
+    assert ui._evidence_strength(0.59) == "Insufficient"
+    assert ui._evidence_strength(0.30) == "Insufficient"
+    assert ui._evidence_strength(0.0) == "Insufficient"
+
+
+def test_render_assessment_hero_shows_evidence_strength_not_percentage(monkeypatch):
+    """The hero's strength display must be a plain evidence-sufficiency
+    word ("Strong"/"Moderate"/"Insufficient"), and the raw percentage
+    must NOT appear in the hero -- a judge skimming the headline must
+    never see a number that could be misread as "there is a 95%/30%
+    chance this conclusion is correct"."""
+    claim = SimpleNamespace(
+        stance=ui.EvidenceStance.SUPPORTS,
+        statement="Historical rejection was a scheduling decision, not technical.",
+        confidence=0.95,
+        claim_type=ui.ClaimType.ADMINISTRATIVE_ACTION,
+    )
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=[claim]),
+        investigation=SimpleNamespace(question="why wasn't it adopted"),
+    )
+
+    rendered = []
+    monkeypatch.setattr(
+        ui.st,
+        "markdown",
+        lambda content, **kwargs: rendered.append(content),
+    )
+
+    ui.render_assessment(result)
+
+    assert len(rendered) == 1
+    html = rendered[0]
+
+    assert "Strong" in html
+    assert "evidence strength" in html
+    assert "95%" not in html
+    assert "0.95" not in html
+
+
+def test_render_assessment_hero_label_unchanged_not_established_shows_insufficient(monkeypatch):
+    """The stance -> label mapping (SUPPORTS -> NO ESCALATION, etc.) must
+    not be touched by the evidence-strength wording change, and a low-
+    confidence NOT_ESTABLISHED claim must read as "Insufficient"
+    evidence strength, with no raw percentage in the hero."""
+    claim = SimpleNamespace(
+        stance=ui.EvidenceStance.NOT_ESTABLISHED,
+        statement="Current technical basis is not established.",
+        confidence=0.30,
+        claim_type=ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION,
+    )
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=[claim]),
+        investigation=SimpleNamespace(question="is the current limit justified"),
+    )
+
+    rendered = []
+    monkeypatch.setattr(
+        ui.st,
+        "markdown",
+        lambda content, **kwargs: rendered.append(content),
+    )
+
+    ui.render_assessment(result)
+
+    html = rendered[0]
+    label, _tone = ui.STANCE_META[ui.EvidenceStance.NOT_ESTABLISHED]
+    assert label in html
+    assert "Insufficient" in html
+    assert "30%" not in html
+
+
+def test_render_confidence_context_shows_evidence_strength_not_percentage(monkeypatch):
+    """Bug: render_confidence_context()'s "What the confidence applies to"
+    caption still hardcoded the raw {confidence:.0%} into its prose (e.g.
+    "The 95% score applies to..."), even though the hero above it was
+    redesigned to show only the evidence-strength word ("Strong" /
+    "Insufficient") and never a raw percentage. The caption must describe
+    the same word the hero shows, not reintroduce a number nowhere else
+    on screen."""
+    claim = SimpleNamespace(
+        stance=ui.EvidenceStance.NOT_ESTABLISHED,
+        statement="Current technical basis is not established.",
+        confidence=0.30,
+        claim_type=ui.ClaimType.CURRENT_TECHNICAL_JUSTIFICATION,
+    )
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=[claim]),
+        investigation=SimpleNamespace(question="is the current limit justified"),
+    )
+
+    rendered = []
+    monkeypatch.setattr(
+        ui.st,
+        "markdown",
+        lambda content, **kwargs: rendered.append(content),
+    )
+
+    ui.render_confidence_context(result)
+
+    assert len(rendered) == 1
+    html = rendered[0]
+
+    assert "Insufficient" in html
+    assert "evidence-strength rating" in html
+    assert "30%" not in html
+    assert "0.3" not in html
+
+
+def test_render_confidence_context_strong_case_shows_strong_word(monkeypatch):
+    """Same caption, high-confidence side: must say 'Strong', never a
+    raw percentage, for a NO ESCALATION / high-confidence claim."""
+    claim = SimpleNamespace(
+        stance=ui.EvidenceStance.SUPPORTS,
+        statement="Historical rejection was a scheduling decision.",
+        confidence=0.95,
+        claim_type=ui.ClaimType.ADMINISTRATIVE_ACTION,
+    )
+    result = SimpleNamespace(
+        report=SimpleNamespace(claims=[claim]),
+        investigation=SimpleNamespace(question="why wasn't it adopted"),
+    )
+
+    rendered = []
+    monkeypatch.setattr(
+        ui.st,
+        "markdown",
+        lambda content, **kwargs: rendered.append(content),
+    )
+
+    ui.render_confidence_context(result)
+
+    html = rendered[0]
+    assert "Strong" in html
+    assert "95%" not in html
+
+
 def test_render_result_calls_direct_answer_before_assessment(monkeypatch):
     calls = []
 
