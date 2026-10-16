@@ -120,6 +120,9 @@ class InvestigationRetriever:
                     content=result.content,
                     retrieval_score=result.score,
                     retrieved_for=[subquestion],
+                    retrieval_channels=list(
+                        getattr(result, "channels", ()) or ()
+                    ),
                 )
                 for result in diversified_results
             ]

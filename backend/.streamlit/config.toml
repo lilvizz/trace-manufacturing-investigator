@@ -1,0 +1,11 @@
+# TRACE dark theme. Read by Streamlit when the app is started from the
+# backend/ directory (`streamlit run app/ui.py`, as in the README). The
+# CSS in app/ui.py also styles the page, so the UI stays dark even if this
+# file is not picked up; this file additionally themes Streamlit's native
+# widgets (tabs, inputs, toasts, chat input) consistently.
+[theme]
+base = "dark"
+primaryColor = "#3cc4d4"
+backgroundColor = "#070b12"
+secondaryBackgroundColor = "#121b28"
+textColor = "#e7edf5"

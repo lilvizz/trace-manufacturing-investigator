@@ -173,9 +173,21 @@ def test_administrative_approval_claim_is_not_misclassified():
         confidence=0.75,
         claim_type=ClaimType.ADMINISTRATIVE_ACTION,
     )
+    # The cited passage must actually concern the 2014 review the claim
+    # names: since the citation-grounding check, a claim whose specific
+    # anchors (here "2014") appear in none of its cited passages is no
+    # longer accepted as SUPPORTS. This test is about gate classification,
+    # so it cites a passage that grounds the claim (still no re-justification).
+    evidence = [
+        make_evidence(
+            "chunk-1",
+            "2014 review: Quality approved continued use of the existing "
+            "limit. No new technical data was generated.",
+        )
+    ]
     investigation = Investigation(
         question="Was the limit administratively reviewed?",
-        evidence=NO_REJUSTIFICATION_EVIDENCE,
+        evidence=evidence,
     )
 
     verified = ClaimVerifier().verify(make_report(claim), investigation)

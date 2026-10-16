@@ -120,6 +120,61 @@ streamlit run app/ui.py
 
 This launches the judge-facing investigation UI in your browser.
 
+### Investigation Command Center (default UI)
+
+`app/ui.py` now opens the multi-page **Investigation Command Center**
+(`app/command_center/`): Command Center, Investigation Overview, Evidence
+Timeline, Evidence Explorer, Reasoning & Claims, Relationship Map,
+Investigation Copilot, Gaps & Actions, and Reports & History. Every page
+reads the same `InvestigationResult` from the unchanged pipeline; the open
+investigation (and the selected turn) is kept while you navigate, and
+citations, claims, timeline events and passages link to each other.
+
+* Investigations are kept for the browser session only. Reports &
+  History offers Markdown report and JSON case-file downloads built from the
+  real results; there is no cross-session storage.
+* System health (sidebar, Command Center, Reports & History) shows one
+  state per subsystem: HEALTHY (its check ran and passed), DEGRADED (works
+  with a stated limitation), FAILED (check ran and failed) or NOT VERIFIED
+  (no check has run yet, e.g. Gemini reasoning before the first
+  investigation). Startup checks are cached per app process; use
+  "Re-run startup checks" after fixing the cause.
+* Recovery: missing/stale index → `python -m app.retrieval.indexer`;
+  end-to-end vector check → `python -m app.retrieval.vector_health`;
+  missing key → add `GEMINI_API_KEY` to the project-root `.env` (loaded by
+  explicit path, so the launch directory does not matter) and restart.
+* The previous single-page workspace is still available:
+  `TRACE_CLASSIC_UI=1 streamlit run app/ui.py` (PowerShell:
+  `$env:TRACE_CLASSIC_UI=1; streamlit run app/ui.py`).
+
+### Validate live vector retrieval
+
+The sidebar shows `VECTOR ON` only after a real query embedding succeeds at
+startup; otherwise it shows `FAILED` or `OFF` with the reason. To check the
+whole vector path from the command line (corpus, index consistency, live
+query embedding, vector search, and vector contribution to hybrid results):
+
+```bash
+cd backend
+python -m app.retrieval.vector_health
+```
+
+If it reports stale embeddings, rebuild the index (`python -m
+app.retrieval.indexer`), then re-run the check and the live tests:
+
+```bash
+python -m pytest tests/integration -v
+```
+
+### Follow-up questions
+
+Within an investigation, follow-ups are contextual: TRACE resolves
+references ("that study", "the replacement") against the earlier questions
+and verified claims of the same investigation, then plans, retrieves and
+verifies fresh evidence. Earlier answers are passed to the reasoner only as
+labelled, not-evidence context and can never be cited. "Start new
+investigation" begins with no context.
+
 ## 6. Example questions
 
 **Flagship question** (the hero case — demonstrates evidence-gap handling

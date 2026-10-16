@@ -2,13 +2,13 @@ import os
 import random
 import time
 
-from dotenv import load_dotenv
 from google import genai
 from google.genai import errors, types
 
+from app.config import load_environment
 from app.retrieval.embeddings import EmbeddingProvider
 
-load_dotenv()
+load_environment()
 
 
 # HTTP status codes worth retrying: 429 (rate limited) and the standard
@@ -26,6 +26,9 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
     def __init__(
         self,
         model: str = "gemini-embedding-001",
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        base_delay_seconds: float = DEFAULT_BASE_DELAY_SECONDS,
+        timeout_seconds: float | None = None,
     ):
         api_key = os.getenv("GEMINI_API_KEY")
 
@@ -34,21 +37,37 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
                 "GEMINI_API_KEY environment variable is not set."
             )
 
-        self.client = genai.Client(api_key=api_key)
+        # Defaults keep the original behaviour for indexing. The UI passes
+        # a short retry budget and a timeout so query embedding can never
+        # stall an investigation for minutes.
+        if timeout_seconds:
+            self.client = genai.Client(
+                api_key=api_key,
+                http_options=types.HttpOptions(timeout=int(timeout_seconds * 1000)),
+            )
+        else:
+            self.client = genai.Client(api_key=api_key)
         self.model = model
+        self.max_retries = max(0, int(max_retries))
+        self.base_delay_seconds = max(0.0, float(base_delay_seconds))
 
     def _embed_with_retry(
         self,
         contents,
         task_type: str,
-        max_retries: int = DEFAULT_MAX_RETRIES,
-        base_delay: float = DEFAULT_BASE_DELAY_SECONDS,
+        max_retries: int | None = None,
+        base_delay: float | None = None,
     ):
         """
         Call the Gemini embed_content API, retrying transient failures
         (429 / 5xx) with exponential backoff and jitter. Non-retryable
         errors (bad request, auth, etc.) are raised immediately.
         """
+
+        if max_retries is None:
+            max_retries = getattr(self, "max_retries", DEFAULT_MAX_RETRIES)
+        if base_delay is None:
+            base_delay = getattr(self, "base_delay_seconds", DEFAULT_BASE_DELAY_SECONDS)
 
         attempt = 0
 

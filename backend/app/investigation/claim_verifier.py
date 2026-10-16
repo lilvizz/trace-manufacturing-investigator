@@ -2,6 +2,7 @@ import re
 from dataclasses import replace
 
 from app.investigation.analyzer import _contains_explicit_rejustification
+from app.retrieval.entity_matcher import extract_entities
 from app.investigation.models import (
     ClaimType,
     EvidenceStance,
@@ -137,6 +138,41 @@ _JUSTIFICATION_RETRACTION_VOCAB = re.compile(
 _SENTENCE_SPLIT = re.compile(r"(?<=[.;!?])\s+")
 
 
+_YEAR = re.compile(r"\b(?:19|20)\d{2}\b")
+
+# Controlled quality-system documents (procedures such as QP-002 and
+# policies such as CQ-POL-011). They are not entity-retrieval anchors
+# (extract_entities is shared with retrieval and is deliberately left
+# unchanged), but they are exactly what a procedural recommendation
+# ("review under QP-002 ...") rests on. Without them, such a statement's
+# only checkable anchor was its equipment name, which a cited procedure
+# or a later chunk of the same record often does not repeat, so a
+# correctly cited procedural basis failed the grounding check. A passage
+# must still contain the identifier itself; naming a procedure never
+# passes on its own.
+_CONTROLLED_DOCUMENT = re.compile(r"\b(?:QP|CQ-POL)-\d+\b", re.IGNORECASE)
+
+
+def _anchors(text: str, controlled_documents: bool = False) -> set[str]:
+    """Specific, checkable anchors in a piece of text: canonical equipment /
+    document identifiers and temperatures (shared with entity retrieval)
+    plus four-digit years. With controlled_documents=True, also quality-
+    system procedure / policy identifiers (used for recommendations only,
+    so the check on factual claims is exactly as before)."""
+    text = str(text or "")
+    anchors = set(extract_entities(text)) | set(_YEAR.findall(text))
+    if controlled_documents:
+        anchors |= {m.upper() for m in _CONTROLLED_DOCUMENT.findall(text)}
+    return anchors
+
+
+def _note(claim: ReasoningClaim, message: str) -> ReasoningClaim:
+    notes = list(getattr(claim, "verification_notes", []) or [])
+    if message not in notes:
+        notes.append(message)
+    return replace(claim, verification_notes=notes)
+
+
 def _sentence_containing(text: str, index: int) -> str:
     offset = 0
     for sentence in _SENTENCE_SPLIT.split(text):
@@ -263,12 +299,99 @@ class ClaimVerifier:
             evidence_by_id,
         )
 
-        claim = self._enforce_rejustification_invariant(
+        claim = self._enforce_citation_grounding(
             claim,
             evidence_by_id,
         )
 
+        before = claim.stance
+        claim = self._enforce_rejustification_invariant(
+            claim,
+            evidence_by_id,
+        )
+        if claim.stance != before:
+            claim = _note(
+                claim,
+                "Current-technical-justification gate: none of the cited passages "
+                "contains an explicit technical re-justification, so the claim is "
+                "not established (confidence capped at 30%).",
+            )
+
         return claim
+
+    def _enforce_citation_grounding(
+        self,
+        claim: ReasoningClaim,
+        evidence_by_id: dict,
+    ) -> ReasoningClaim:
+        """
+        A citation existing is not proof that it supports the claim.
+
+        Deterministic, deliberately conservative check: when a SUPPORTS or
+        CONTRADICTS claim names specific anchors (equipment/document IDs,
+        temperatures, or years) and NONE of them appears in any passage it
+        cites, the citations cannot be what the claim rests on. The claim
+        is kept but becomes INCONCLUSIVE with zero confidence. Claims with
+        no such anchors, or with at least one anchor found, are unchanged
+        (this is not a semantic entailment check).
+
+        The outcome is recorded on the claim (citation_check, and the
+        anchors / chunks that matched) so the UI can state exactly what was
+        checked. A match means an identifier appears in a cited passage; it
+        does not mean the passage supports the statement.
+        """
+        if claim.stance not in (EvidenceStance.SUPPORTS, EvidenceStance.CONTRADICTS):
+            return claim
+
+        is_recommendation = claim.claim_type == ClaimType.RECOMMENDATION
+        statement_anchors = _anchors(claim.statement, controlled_documents=is_recommendation)
+        if not statement_anchors:
+            return replace(claim, citation_check="no_identifiers",
+                           citation_check_anchors=[], citation_check_chunk_ids=[])
+
+        # A recommendation that invokes a named procedure or policy rests on
+        # that document: a passage that only mentions the same equipment
+        # (e.g. meeting minutes about Press-07) is not its basis. So for such
+        # a recommendation the required anchors are the procedure/policy
+        # identifiers it names. This is stricter, never looser, than the
+        # general any-anchor rule below.
+        required = statement_anchors
+        outcome = "identifier_overlap"
+        if is_recommendation:
+            procedures = {a for a in statement_anchors if _CONTROLLED_DOCUMENT.fullmatch(a)}
+            if procedures:
+                required = procedures
+                outcome = "procedure_referenced"
+
+        matched_anchors: set[str] = set()
+        matched_chunks: list[str] = []
+        for chunk_id in claim.evidence_chunk_ids:
+            if chunk_id not in evidence_by_id:
+                continue
+            content = str(getattr(evidence_by_id[chunk_id], "content", ""))
+            found = required & _anchors(content, controlled_documents=True)
+            if found:
+                matched_anchors |= found
+                matched_chunks.append(chunk_id)
+        if matched_chunks:
+            return replace(claim, citation_check=outcome,
+                           citation_check_anchors=sorted(matched_anchors),
+                           citation_check_chunk_ids=matched_chunks)
+
+        shown = ", ".join(sorted(required))
+        return _note(
+            replace(
+                claim,
+                stance=EvidenceStance.UNKNOWN,
+                confidence=0.0,
+                citation_check="failed",
+                citation_check_anchors=[],
+                citation_check_chunk_ids=[],
+            ),
+            "Grounding check: none of the specific identifiers, values or years "
+            f"in the claim ({shown}) appears in its cited passages, so the "
+            "citations do not support it; marked inconclusive.",
+        )
 
     def _enforce_citation_existence(
         self,
@@ -291,16 +414,25 @@ class ClaimVerifier:
         ]
 
         if len(valid_ids) != len(claim.evidence_chunk_ids):
-            claim = replace(
-                claim,
-                evidence_chunk_ids=valid_ids,
+            removed = [c for c in claim.evidence_chunk_ids if c not in evidence_by_id]
+            claim = _note(
+                replace(
+                    claim,
+                    evidence_chunk_ids=valid_ids,
+                ),
+                f"Removed {len(removed)} citation(s) not present in the retrieved "
+                f"evidence: {', '.join(removed[:4])}{'…' if len(removed) > 4 else ''}.",
             )
 
         if not valid_ids:
-            return replace(
-                claim,
-                stance=EvidenceStance.UNKNOWN,
-                confidence=0.0,
+            return _note(
+                replace(
+                    claim,
+                    stance=EvidenceStance.UNKNOWN,
+                    confidence=0.0,
+                ),
+                "No citation resolved to retrieved evidence; marked inconclusive "
+                "with no confidence.",
             )
 
         return claim

@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Protocol
 
 
@@ -7,6 +7,12 @@ from typing import Protocol
 class InvestigationPlan:
     question: str
     subquestions: list[str]
+    # How the plan was produced: "gemini", "deterministic-narrow",
+    # "deterministic" (no planning client) or "deterministic-fallback"
+    # (Gemini planning failed; fallback_reason says why). Defaults keep
+    # older positional construction working.
+    source: str = ""
+    fallback_reason: str = ""
 
 
 class PlanningClient(Protocol):
@@ -39,15 +45,21 @@ class InvestigationPlanner:
         # original planner below while adding a small, deterministic
         # routing layer for focused lookups.
         if self._is_narrow_question(question):
-            return self._create_narrow_plan(question)
+            return replace(self._create_narrow_plan(question), source="deterministic-narrow")
 
         if self.planning_client is None:
-            return self._create_deterministic_plan(question)
+            return replace(self._create_deterministic_plan(question), source="deterministic")
 
         try:
-            return self._create_gemini_plan(question)
-        except Exception:
-            return self._create_deterministic_plan(question)
+            return replace(self._create_gemini_plan(question), source="gemini")
+        except Exception as exc:
+            # The safe fallback is unchanged, but it is no longer silent:
+            # the plan records that Gemini planning failed and why.
+            return replace(
+                self._create_deterministic_plan(question),
+                source="deterministic-fallback",
+                fallback_reason=f"{type(exc).__name__}: {exc}"[:300],
+            )
 
 
     @staticmethod

@@ -48,9 +48,16 @@ class VectorSearcher:
                 "Number of chunks must match number of embeddings."
             )
 
+        dimensions = {len(e) for e in embeddings}
+        if len(dimensions) > 1:
+            raise ValueError(
+                f"Index embeddings have inconsistent dimensions: {sorted(dimensions)}."
+            )
+
         self.chunks = chunks
         self.embeddings = embeddings
         self.embedding_provider = embedding_provider
+        self.dimension = next(iter(dimensions)) if dimensions else None
 
     def search(
         self,
@@ -61,6 +68,16 @@ class VectorSearcher:
         query_embedding = self.embedding_provider.embed_query(
             query
         )
+
+        # zip() in cosine_similarity would silently truncate a mismatched
+        # vector and return meaningless scores; fail loudly instead so the
+        # hybrid retriever records a vector failure.
+        if self.dimension is not None and len(query_embedding) != self.dimension:
+            raise ValueError(
+                f"Query embedding has {len(query_embedding)} dimensions but the "
+                f"index has {self.dimension}; rebuild the index with the query model "
+                "(python -m app.retrieval.indexer)."
+            )
 
         scored = []
 
