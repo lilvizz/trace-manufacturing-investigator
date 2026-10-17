@@ -2,11 +2,12 @@ import os
 import random
 import time
 
-from dotenv import load_dotenv
 from google import genai
 from google.genai import errors, types
 
-load_dotenv()
+from app.config import load_environment
+
+load_environment()
 
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
@@ -25,6 +26,7 @@ class GeminiReasoningClient:
         model: str = "gemini-3.6-flash",
         max_retries: int = 5,
         base_delay_seconds: float = 1.0,
+        timeout_seconds: float | None = None,
     ):
         api_key = os.getenv("GEMINI_API_KEY")
 
@@ -40,6 +42,10 @@ class GeminiReasoningClient:
         self.client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
+                # Per-request timeout (milliseconds). None keeps the SDK
+                # default; the UI passes a bound so a stalled network call
+                # surfaces as an error instead of hanging the app.
+                timeout=int(timeout_seconds * 1000) if timeout_seconds else None,
                 retry_options=types.HttpRetryOptions(
                     attempts=sdk_attempts,
                     initial_delay=max(0.0, base_delay_seconds),

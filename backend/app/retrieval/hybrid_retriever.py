@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import threading
 
 from app.retrieval.diversifier import diversify_results
 
@@ -11,6 +12,11 @@ class HybridSearchResult:
     relative_path: str
     content: str
     score: float
+    # Which retrieval channels ranked this chunk ("bm25", "vector",
+    # "entity"). Defaulted so existing constructors keep working; it lets
+    # an investigation show, per passage, whether vector retrieval
+    # actually contributed rather than inferring it from configuration.
+    channels: tuple[str, ...] = ()
 
 
 class HybridRetriever:
@@ -53,6 +59,17 @@ class HybridRetriever:
         self.candidate_k = candidate_k
         self.max_per_document = max_per_document
 
+        # Cumulative channel diagnostics. Vector failures still fall back
+        # gracefully to BM25 + entity retrieval (unchanged behaviour), but
+        # they are now counted and the last error is kept, so the UI can
+        # report a fallback instead of silently claiming hybrid retrieval.
+        self._stats_lock = threading.Lock()
+        self.vector_calls = 0
+        self.vector_failures = 0
+        self.last_vector_error: str | None = None
+        self.entity_failures = 0
+        self.last_entity_error: str | None = None
+
     def search(
         self,
         query: str,
@@ -74,14 +91,26 @@ class HybridRetriever:
         )
         rankers.append(bm25_results)
 
-        # Vector retrieval is allowed to fail gracefully.
-        try:
-            vector_results = self.vector_searcher.search(
-                query,
-                top_k=self.candidate_k,
-            )
-        except Exception:
-            vector_results = []
+        # Vector retrieval is allowed to fail gracefully. A missing
+        # searcher is "disabled", not a failure; a raised exception is
+        # recorded so the fallback is visible to callers.
+        vector_results = []
+        if self.vector_searcher is not None:
+            try:
+                vector_results = self.vector_searcher.search(
+                    query,
+                    top_k=self.candidate_k,
+                )
+                with self._stats_lock:
+                    self.vector_calls += 1
+            except Exception as exc:
+                vector_results = []
+                with self._stats_lock:
+                    self.vector_calls += 1
+                    self.vector_failures += 1
+                    self.last_vector_error = (
+                        f"{type(exc).__name__}: {exc}"
+                    )[:400]
 
         if vector_results:
             rankers.append(vector_results)
@@ -93,13 +122,38 @@ class HybridRetriever:
                 query,
                 top_k=self.candidate_k,
             )
-        except Exception:
+        except Exception as exc:
+            # Still a graceful fallback, but recorded (previously silent).
             entity_results = []
+            with self._stats_lock:
+                self.entity_failures += 1
+                self.last_entity_error = f"{type(exc).__name__}: {exc}"[:400]
 
         if entity_results:
             rankers.append(entity_results)
 
         fused = self._rrf_fuse(rankers)
+
+        channel_ids = {
+            "bm25": {r.chunk_id for r in bm25_results},
+            "vector": {r.chunk_id for r in vector_results},
+            "entity": {r.chunk_id for r in entity_results},
+        }
+        fused = [
+            HybridSearchResult(
+                chunk_id=r.chunk_id,
+                document_id=r.document_id,
+                filename=r.filename,
+                relative_path=r.relative_path,
+                content=r.content,
+                score=r.score,
+                channels=tuple(
+                    name for name, ids in channel_ids.items()
+                    if r.chunk_id in ids
+                ),
+            )
+            for r in fused
+        ]
 
         diversified = diversify_results(
             fused,

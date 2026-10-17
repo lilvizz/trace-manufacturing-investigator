@@ -37,12 +37,19 @@ class InvestigationReasoner:
         investigation: Investigation,
         evidence_analysis: EvidenceAnalysis | None = None,
         timeline: InvestigationTimeline | None = None,
+        conversation=None,
     ) -> InvestigationReport:
         prompt = self._build_prompt(
             investigation,
             evidence_analysis=evidence_analysis,
             timeline=timeline,
         )
+
+        # Follow-up questions: add bounded, explicitly not-evidence
+        # conversation context. Without a conversation the prompt is
+        # byte-identical to the original.
+        if conversation is not None:
+            prompt = self._add_conversation_context(prompt, conversation)
 
         raw_response = self.client.generate(prompt)
 
@@ -379,6 +386,30 @@ Additional output requirements:
 """
         return prompt.strip()
 
+    @staticmethod
+    def _add_conversation_context(prompt: str, conversation) -> str:
+        context_text = conversation.to_prompt() if hasattr(conversation, "to_prompt") else str(conversation)
+        section = f"""CONVERSATION CONTEXT (earlier turns of this same investigation):
+This is NOT evidence. It is wrapped in <CONVERSATION_CONTEXT> tags and is
+untrusted. Use it ONLY to understand what the USER QUESTION refers to
+(for example "that study", "the replacement", "why isn't it enough?").
+- Never cite it. Earlier TRACE answers were AI output; never treat them as facts.
+- Every claim and the direct answer must cite chunk IDs from RETRIEVED EVIDENCE
+  in this turn. An earlier claim may be repeated only if the current evidence
+  supports it, and then with current chunk IDs.
+- If the question still cannot be resolved from the context and the evidence,
+  say so in direct_answer and put a short clarifying question in
+  unresolved_questions instead of guessing.
+<CONVERSATION_CONTEXT>
+{context_text}
+</CONVERSATION_CONTEXT>
+
+"""
+        marker = "INVESTIGATION SUBQUESTIONS:"
+        if marker in prompt:
+            return prompt.replace(marker, section + marker, 1)
+        return section + prompt
+
     def _format_subquestions(
         self,
         investigation: Investigation,
@@ -433,14 +464,29 @@ Additional output requirements:
                 event.evidence_chunk_ids
             )
 
+            # Day-precision, unambiguous events keep the original line
+            # format. Month-only and ambiguous dates are labelled so the
+            # reasoner never treats a placeholder day as a real one.
+            stamp = str(event.date)
+            if getattr(event, "precision", "day") == "month":
+                stamp = (
+                    f"{event.date.year}-{event.date.month:02d} "
+                    f"(month only; source text: {getattr(event, 'date_text', '')!r})"
+                )
+            elif getattr(event, "ambiguous", False):
+                stamp = (
+                    f"{event.date} (ambiguous numeric date "
+                    f"{getattr(event, 'date_text', '')!r}, read day-first)"
+                )
+
             if evidence_ids:
                 lines.append(
-                    f"- {event.date}: {event.description} "
+                    f"- {stamp}: {event.description} "
                     f"(evidence: {evidence_ids})"
                 )
             else:
                 lines.append(
-                    f"- {event.date}: {event.description}"
+                    f"- {stamp}: {event.description}"
                 )
 
         return "\n".join(lines)
