@@ -1,5 +1,35 @@
 # TRACE — Manufacturing Evidence Investigator
 
+**Ask why a manufacturing decision exists.** TRACE reconstructs the evidence
+trail behind a process limit, checks the model's citations with deterministic
+code, and reports **NOT ESTABLISHED** when the records do not support an
+answer, instead of guessing.
+
+**Live app:** https://trace-investigator-820547504407.asia-south1.run.app (Google Cloud Run)  
+**Demo video (2:51):** https://youtu.be/DHLaIBYAxuU  
+**Built for:** Google Cloud × H2S AI Builder Cup 2026
+
+> **About the data.** Every document in `data/apex-corpus/` is **synthetic**,
+> written for this project about a fictional plant (Apex Thermal Components).
+> No real company, plant or production record is included. TRACE is a working
+> prototype demonstrated on this curated case; its behaviour on real plant
+> records has not been validated yet. See [About the corpus](#about-the-corpus).
+
+![Command Center: ask a question and watch the investigation stages](docs/images/home.jpg)
+
+| Verdict | Reconstructed timeline |
+|---|---|
+| ![Investigation Overview showing a NOT ESTABLISHED conclusion](docs/images/overview_conclusion.jpg) | ![Evidence timeline from 2001 to 2022](docs/images/timeline.jpg) |
+| **Cited source passage** | **Deterministic evidence-gap check** |
+| ![Evidence Explorer with the selected source passage](docs/images/explorer.jpg) | ![Gaps & Actions with the deterministic check](docs/images/gaps.jpg) |
+
+*Screenshots from a live run with Gemini on the Press-07 question. Confidence
+figures vary between runs; deterministic caps are ceilings, not fixed outputs.*
+
+**Google services used:** Cloud Run hosts the app; the Gemini API handles
+investigation planning and reasoning; `gemini-embedding-001` (3,072-d) powers
+semantic retrieval.
+
 ## 1. What TRACE does
 
 TRACE investigates manufacturing engineering questions against a corpus of
@@ -96,8 +126,11 @@ LLM's own output.
 
 ## 4. Build the embedding index
 
-The corpus must be embedded before retrieval or investigation can run. From
-the `backend/` directory:
+The corpus must be embedded before retrieval or investigation can run. The
+index is not committed, so a fresh clone needs this step (it calls the Gemini
+API, so `GEMINI_API_KEY` must be set). Paths are resolved from the project
+root (`backend/app/config.py`), so `data/` below means the repository's
+top-level `data/` folder. From the `backend/` directory:
 
 ```bash
 cd backend
@@ -221,7 +254,66 @@ it:
    cited starting point for an engineer or quality reviewer, not a final
    determination.
 
-## 8. Known limitation
+## 8. Tests
+
+```bash
+pip install -r requirements-dev.txt
+cd backend
+python -m pytest -q
+```
+
+The suite has 327 tests (unit tests for every pipeline stage, the safety
+invariants, the recommendation-grounding rules and the Command Center data
+layer, plus live integration tests). Without a `GEMINI_API_KEY` and a built
+index, the live tests are skipped: a fresh offline run reports
+**321 passed, 6 skipped**. With a key and an index, the live Gemini and
+vector-retrieval tests run as well.
+
+## 9. Deployment (Docker / Cloud Run)
+
+The `Dockerfile` builds the Streamlit app on `python:3.11-slim` and serves it
+on `$PORT` (default 8080), which is what Cloud Run expects. Build the
+embedding index (section 4) before building the image so `data/indexes/` is
+included, and provide `GEMINI_API_KEY` as an environment variable or secret
+at runtime; never bake it into the image.
+
+```bash
+docker build -t trace .
+docker run -p 8080:8080 -e GEMINI_API_KEY=your-key trace
+```
+
+To deploy to Cloud Run from the repository root:
+
+```bash
+gcloud run deploy trace-investigator --source . --region asia-south1 \
+  --set-env-vars GEMINI_API_KEY=your-key
+```
+
+(For production, store the key in Secret Manager and use `--set-secrets`.)
+
+## About the corpus
+
+`data/apex-corpus/` holds **40 synthetic documents** (split into 70 evidence
+passages) about the fictional company Apex Thermal Components, written to
+test evidence investigation rather than copied from any real plant. They are
+organised into seven source types:
+
+| Folder | Contents |
+|---|---|
+| `A_asset_equipment_history` | Asset master, installation and maintenance history, the 2011 PX-200 → PX-400 replacement ECO and commissioning report |
+| `B_historical_engineering` | 2001 thermal validation and engineering note, later validation and qualification reports |
+| `C_spc_quality` | Current and historical SPC configuration, SPC reviews, quality metrics |
+| `D_sop_evolution` | Cure-process SOP versions from v3 (2003) to v8 (current) |
+| `E_maintenance_calibration` | Sensor calibration and replacement records, maintenance logs, reliability review |
+| `F_human_informal` | Handover notes, a retired-engineer interview, technician notes, meeting minutes, email |
+| `G_distractors` | Records that look relevant but are not the answer: another press, another product, a superseded validation, a rejected proposal, a plant-wide policy |
+
+The Press-07 case is deliberately hard: the 42.3 °C limit survives an
+equipment replacement, a requalification study and later SOP revisions, but
+no record explicitly re-justifies it for the new equipment. A system that
+treats "still written down" as "still justified" gets it wrong.
+
+## 10. Known limitation
 
 TRACE is a structured, LLM-assisted investigation **pipeline** — a fixed
 sequence of planning, retrieval, analysis, reasoning, and verification
